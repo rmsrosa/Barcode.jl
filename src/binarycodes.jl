@@ -5,7 +5,7 @@ This dictionary gives the binary representation of digits and flow control symbo
 to the 128C standard representation.
 
 From `00` to `99`, the key represents the digits in the code, while from `100` to `102`,
-the key represents the value of the verification code. From `START C` onwards, the key is
+the key represents the value of the check symbol. From `START C` onwards, the key is
 the character.
 """
 const CODE128C = Dict(
@@ -149,28 +149,28 @@ function get_code128c(code::AbstractString)
     binarycode = Vector{String}()
     push!(binarycode, CODE128C["START C"])
 
-    # Start summation (with the value of "START C", which is 105) for verification digit
-    vd_sum = 105
-    # start multiplier (weight) for the verification digit
+    # Start summation (with the value of "START C", which is 105) for the check symbol
+    chk_sum = 105
+    # start multiplier (weight) for the check symbol
     i = 0
 
     # Barras do CEP e somatório com peso para o código verificador
     for j in 1:2:length(code)
         s = code[j:j+1]
         push!(binarycode, CODE128C[s])
-        # increase multiplier and value for the verification digit
+        # increase multiplier and value for the check symbol
         i += 1
-        vd_sum += i * parse(Int, s)
+        chk_sum += i * parse(Int, s)
     end
 
     # Verication digit bar
-    dv = rem(vd_sum, 103)
-    if dv < 10
-        dv_str = "0" * string(dv)
+    chk_sum = rem(chk_sum, 103)
+    if chk_sum < 10
+        chk_sum_str = "0" * string(chk_sum)
     else
-        dv_str = string(dv)
+        chk_sum_str = string(chk_sum)
     end
-    push!(binarycode, CODE128C[dv_str])
+    push!(binarycode, CODE128C[chk_sum_str])
 
     # "STOP" bar
     push!(binarycode, CODE128C["STOP"])
