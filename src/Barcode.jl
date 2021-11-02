@@ -1,6 +1,8 @@
 module Barcode
 
-include("code128_dicts.jl")
+using DataFrames
+
+include("charsets.jl")
 include("binarycodes.jl")
 
 end
