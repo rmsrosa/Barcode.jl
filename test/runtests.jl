@@ -93,6 +93,20 @@ end
 end
 
 @testset "zip" begin
-    zip = "12.345-678"
-    zip = replace(zip, r"\s|\.|\-" => "")
+    let zip = "12.345-678"
+        zip = replace(zip, r"\s|\.|\-" => "")
+        binary_pattern = Barcode.get_code128(zip, :code128c)
+        @test length(binary_pattern) == 8
+        @test binary_pattern == [
+            "11010011100", # START C
+            "10110011100", # 12
+            "10001011000", # 34
+            "11100010110", # 56
+            "11000010100", # 78
+            "10001110110", # checksum pattern 47 = 
+                           # (1 * 105 + 1 * 12 + 2 * 34 + 3 * 56 + 4 * 78) % 103
+            "11000111010", # STOP
+            "11" # END
+        ]
+    end
 end

@@ -69,38 +69,52 @@ end
 
 function get_code128(code::AbstractString, mode::Symbol = :auto)
     binary_pattern = Vector{String}()
-    if mode == :code128c
+
+    # start multiplier (weight) for the check symbol
+    multiplier = 0
+    if mode == :code128a
+        # Begins with "START A" code
+        append!(binary_pattern, CHARSET[CHARSET[:, mode] .== "START A", :pattern])
+
+        # Start summation for the check pattern with the value of "START A", which is 103
+        chk_sum = 103
+    elseif mode == :code128b
+        # Begins with "START B" code
+        append!(binary_pattern, CHARSET[CHARSET[:, mode] .== "START B", :pattern])
+
+        # Start summation for the check pattern with the value of "START B", which is 104
+        chk_sum = 104
+    elseif mode == :code128c
         # Begins with "START C" code
-        append!(binary_pattern, CHARSET[CHARSET.code128c .== "START C", :pattern])
+        append!(binary_pattern, CHARSET[CHARSET[:, mode] .== "START C", :pattern])
 
-        # Start summation (with the value of "START C", which is 105) for the check symbol
+        # Start summation for the check pattern with the value of "START B", which is 105
         chk_sum = 105
-        # start multiplier (weight) for the check symbol
-        multiplier = 0
-
-        # get code and auxiliary variables for the code128c encoding 
-        bc, cs, = get_code128_chunk(code, mode, multiplier)
-
-        # update binary_pattern and check sum
-        append!(binary_pattern, bc)
-        chk_sum += cs
-
-        # Check sum binary_pattern
-        chk_sum = rem(chk_sum, 103)
-        if chk_sum < 10
-            chk_sum_str = "0" * string(chk_sum)
-        else
-            chk_sum_str = string(chk_sum)
-        end
-        append!(binary_pattern, CHARSET[CHARSET.code128c .== chk_sum_str, :pattern])
-
-        # "STOP" bar
-        append!(binary_pattern, CHARSET[CHARSET.code128c .== "STOP", :pattern])
-
-        # "END" bar
-        push!(binary_pattern, "11")
     else
         throw(ArgumentError("mode `$(Meta.quot(mode))` not implemented"))
+    end 
+
+    # get code and auxiliary variables for the encoding 
+    bc, cs, = get_code128_chunk(code, mode, multiplier)
+
+    # update binary_pattern and check sum
+    append!(binary_pattern, bc)
+    chk_sum += cs
+
+    # Check sum binary_pattern
+    chk_sum = rem(chk_sum, 103)
+    if chk_sum < 10
+        chk_sum_str = "0" * string(chk_sum)
+    else
+        chk_sum_str = string(chk_sum)
     end
+    append!(binary_pattern, CHARSET[CHARSET.code128c .== chk_sum_str, :pattern])
+
+    # "STOP" bar
+    append!(binary_pattern, CHARSET[CHARSET.code128c .== "STOP", :pattern])
+
+    # "END" bar
+    push!(binary_pattern, "11")
+
     return binary_pattern
 end
