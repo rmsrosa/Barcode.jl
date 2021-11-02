@@ -7,13 +7,20 @@ the barcode.
 """
 function pattern_img(binary_pattern, height = 20)
     bp = prod(binary_pattern)
-    img = Gray.(
-        transpose(
-            reduce(
-                hcat,
-                fill(BitVector(map(c -> parse(Bool, c), collect(bp))), height)
-            )
-        )
-    )
+    img = Gray.(repeat(reshape(map(==('1'), collect(bp)), 1,:), height, 1))
     return img
 end
+
+"""
+    pattern_save(filename, binary_pattern, height = 20)
+
+Save the `binary_pattern` to file using any format accepted by `FileIO` and with
+the specified height.
+"""
+function pattern_save(filename, binary_pattern, height = 20)
+    img = pattern_img(binary_pattern, height)
+    FileIO.save(filename, img)
+end
+
+
+

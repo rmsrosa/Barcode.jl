@@ -127,7 +127,7 @@ end
     end
 end
 
-@testset "zip" begin
+@testset "save img" begin
     let zip = "12.345-678"
         zip = replace(zip, r"\s|\.|\-" => "")
         binary_pattern = Barcode.get_code128(zip, :code128c)
@@ -143,5 +143,24 @@ end
             "11000111010", # STOP
             "11" # END
         ]
+        @test Barcode.pattern_save("../img/zipcode_$zip.png", binary_pattern) === nothing
+    end
+
+    let binary_pattern = Barcode.get_code128("CSE370", :auto)
+        @test length(binary_pattern) == 10
+        @test binary_pattern == [
+            "11010000100", # START A
+            "10001000110", # C
+            "11011101000", # S
+            "10001101000", # E
+            "11001011100", # 3
+            "11101101110", # 7
+            "10011101100", # 0
+            "11001001110", # check sum 20 
+                           # (1 * 103 + 1 * 35 + 2 * 51 + 3 * 37 + 4 * 19 + 5 * 23 + 6 * 16)
+            "11000111010", # STOP
+            "11" # END
+        ]
+        @test Barcode.pattern_save("../img/CSE370.png", binary_pattern) === nothing
     end
 end
