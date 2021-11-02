@@ -40,7 +40,7 @@ julia> prod(binary_pattern)
 "1101001110010110011100100010110001110001011011000010100100011101101100011101011"
 ```
 
-Once `binary_pattern` is obtained, one can create a Gray Image array and/or save the image to file with `pattern_img(binary_pattern; height = 20)` and `Barcode.pattern_save(filename, binary_pattern; height = 20)`.
+Once `binary_pattern` is obtained, one can create a Gray Image array and/or save the image to file with `pattern_img(binary_pattern; img_height = 20)` and `Barcode.pattern_save(filename, binary_pattern; img_height = 20)`.
 
 Here is the result of saving the zip code above to a PNG file with `Barcode.pattern_save("../img/zipcode_12345678.png", binary_pattern)`:
 
