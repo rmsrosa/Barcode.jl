@@ -56,6 +56,14 @@ julia> pattern_save("../img/CSE370.png", binary_pattern)
 
 ![CSE370](img/CSE370.png)
 
-# License
+## To-do
+
+There are still a few things to be done in regards to the generated images, and image formats to play along with other graphic tools.
+
+Mode `:auto` also needs to be able to handle changing subtypes.
+
+And there are plenty of other barcode formats that can be implemented.
+
+## License
 
 This package is provided under the [MIT License](LICENSE).
