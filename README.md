@@ -4,7 +4,7 @@ A [Code128](https://en.wikipedia.org/wiki/Code_128) barcode generator (see also 
 
 This package is under development.
 
-Currently, only code set 128C is being implemented.
+Currently, only code128 is being implemented, but other barcodes might be implemented in the future. Contributions are welcome!
 
 # License
 
