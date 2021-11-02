@@ -92,6 +92,41 @@ end
     end
 end
 
+@testset "auto" begin
+    let binary_pattern = Barcode.get_code128("A", :auto)
+        @test length(binary_pattern) == 5
+        @test binary_pattern == [
+            "11010000100", # START A
+            "10100011000", # A
+            "10100011000", # checksum 33 pattern
+            "11000111010", # STOP
+            "11" # END
+        ]
+    end
+
+    let binary_pattern = Barcode.get_code128("a", :auto)
+        @test length(binary_pattern) == 5
+        @test binary_pattern == [
+            "11010010000", # START B
+            "10010110000", # a
+            "10010000110", # checksum 66 pattern
+            "11000111010", # STOP
+            "11" # END
+        ]
+    end
+
+    let binary_pattern = Barcode.get_code128("00", :auto)
+        @test length(binary_pattern) == 5
+        @test binary_pattern == [
+            "11010011100", # START C
+            "11011001100", # 00
+            "11001100110", # checksum 2 pattern
+            "11000111010", # STOP
+            "11" # END
+        ]
+    end
+end
+
 @testset "zip" begin
     let zip = "12.345-678"
         zip = replace(zip, r"\s|\.|\-" => "")

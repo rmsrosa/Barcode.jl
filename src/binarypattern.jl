@@ -72,6 +72,27 @@ function get_code128(code::AbstractString, mode::Symbol = :auto)
 
     # start multiplier (weight) for the check symbol
     multiplier = 0
+
+    if mode == :auto
+        if all(isdigit, code)
+            mode = :code128c
+        elseif all(x -> string(x) in CHARSET.code128a, code)
+            mode = :code128a
+        elseif all(x -> string(x) in CHARSET.code128b, code)
+            mode = :code128b
+        elseif all(x -> string(x) in [CHARSET.code128a; CHARSET.code128b], code)
+            throw(
+                ErrorException(
+                    "This `code` requires mixing different modes/subtypes " * 
+                    "of code128, but this has not been implemented yet"
+                )
+            )
+        else
+            throw(
+                ArgumentError("This `code` cannot be encoded in code128")
+            )
+        end
+    end
     if mode == :code128a
         # Begins with "START A" code
         append!(binary_pattern, CHARSET[CHARSET[:, mode] .== "START A", :pattern])
