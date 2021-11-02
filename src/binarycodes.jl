@@ -20,7 +20,7 @@ de código de barras (code128 START C).
 """
 function get_code128_chunk(code::AbstractString, mode, multiplier = 0)
 
-    if mode in (:code128a, :code128b) && !all(x -> string(x) in charset[:, mode], code)
+    if mode in (:code128a, :code128b) && !all(x -> string(x) in CHARSET[:, mode], code)
         throw(
             ArgumentError(
                 "Some or all characters in `code` cannot be encoded in `$(Meta.quot(mode))`"
@@ -51,13 +51,16 @@ function get_code128_chunk(code::AbstractString, mode, multiplier = 0)
 
     # Iterate code and uptade binarycode, multiplier and check sum
     for j in 1:step:length(code)
+
+        # get CHARSET row for this iteration
         s = code[j:j + step - 1]
-        row = charset[charset[:, mode] .== s, :]
+        row = CHARSET[CHARSET[:, mode] .== s, :]
+
+        # update binarycode
         append!(binarycode, row.pattern)
         # increase multiplier
         multiplier += 1
         # update check sum
-        #value = charset[charset[:, mode] .== s, :value][1]
         chk_sum += multiplier * row.value[1]
     end
 
@@ -68,7 +71,7 @@ function get_code128(code::AbstractString, mode::Symbol = :auto)
     binarycode = Vector{String}()
     if mode == :code128c
         # Begins with "START C" code
-        append!(binarycode, charset[charset.code128c .== "START C", :pattern])
+        append!(binarycode, CHARSET[CHARSET.code128c .== "START C", :pattern])
 
         # Start summation (with the value of "START C", which is 105) for the check symbol
         chk_sum = 105
@@ -89,10 +92,10 @@ function get_code128(code::AbstractString, mode::Symbol = :auto)
         else
             chk_sum_str = string(chk_sum)
         end
-        append!(binarycode, charset[charset.code128c .== chk_sum_str, :pattern])
+        append!(binarycode, CHARSET[CHARSET.code128c .== chk_sum_str, :pattern])
 
         # "STOP" bar
-        append!(binarycode, charset[charset.code128c .== "STOP", :pattern])
+        append!(binarycode, CHARSET[CHARSET.code128c .== "STOP", :pattern])
 
         # "END" bar
         push!(binarycode, "11")
