@@ -40,7 +40,7 @@ julia> prod(binary_pattern)
 "1101001110010110011100100010110001110001011011000010100100011101101100011101011"
 ```
 
-Once `binary_pattern` is obtained, one can make create a Gray Image array with `pattern_img(binary_pattern, height = 20)` and/or save it directly to an image file with `Barcode.pattern_save(filename, binary_pattern, height = 20)`.
+Once `binary_pattern` is obtained, one can create a Gray Image array and/or save the image to file with `pattern_img(binary_pattern; height = 20)` and `Barcode.pattern_save(filename, binary_pattern; height = 20)`.
 
 Here is the result of saving the zip code above to a PNG file with `Barcode.pattern_save("../img/zipcode_12345678.png", binary_pattern)`:
 
@@ -51,14 +51,14 @@ Here is another example with `code128a`:
 ```julia
 julia> binary_pattern = Barcode.get_code128(zip, :code128c);
 
-julia> pattern_save("../img/CSE370.png", binary_pattern)
+julia> pattern_img("../img/CSE370.png", binary_pattern)
 ```
 
 ![CSE370](img/CSE370.png)
 
 ## To-do
 
-There are still a few things to be done in regards to the generated images, and image formats to play along with other graphic tools.
+There are still a few things to be done in regards to the generated images, and with the image formats to play along with other graphic tools.
 
 Mode `:auto` also needs to be able to handle changing subtypes.
 

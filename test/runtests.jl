@@ -157,7 +157,7 @@ end
             "11", # END
             "00000000000", # Quiet zone
         ]
-        @test Barcode.pattern_save("../img/zipcode_$zip.png", binary_pattern) === nothing
+        @test Barcode.pattern_img("../img/zipcode_$zip.png", binary_pattern) === nothing
     end
 
     let binary_pattern = Barcode.get_code128("CSE370", :auto)
@@ -177,6 +177,6 @@ end
             "11", # END
             "00000000000" # Quiet zone
         ]
-        @test Barcode.pattern_save("../img/CSE370.png", binary_pattern) === nothing
+        @test Barcode.pattern_img("../img/CSE370.png", binary_pattern) === nothing
     end
 end
