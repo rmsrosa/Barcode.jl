@@ -7,6 +7,7 @@ the barcode.
 """
 function pattern_img(binary_pattern, height = 20)
     bp = prod(binary_pattern)
+    # with a little help from @ScottPJones and @borodi
     img = Gray.(repeat(reshape(map(==('1'), collect(bp)), 1,:), height, 1))
     return img
 end
