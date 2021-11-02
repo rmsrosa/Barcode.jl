@@ -2,7 +2,7 @@ module Barcode
 
 using DataFrames
 
-include("charsets.jl")
+include("charset.jl")
 include("binarycodes.jl")
 
 end
