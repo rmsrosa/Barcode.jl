@@ -59,70 +59,82 @@ end
 
 @testset "code128" begin
     let binary_pattern = Barcode.get_code128("A", :code128a)
-        @test length(binary_pattern) == 5
+        @test length(binary_pattern) == 7
         @test binary_pattern == [
+            "00000000000", # Quiet zone
             "11010000100", # START A
             "10100011000", # A
             "10100011000", # checksum 33 pattern
             "11000111010", # STOP
-            "11" # END
+            "11", # END
+            "00000000000" # Quiet zone
         ]
     end
 
     let binary_pattern = Barcode.get_code128("a", :code128b)
-        @test length(binary_pattern) == 5
+        @test length(binary_pattern) == 7
         @test binary_pattern == [
+            "00000000000", # Quiet zone
             "11010010000", # START B
             "10010110000", # a
             "10010000110", # checksum 66 pattern
             "11000111010", # STOP
-            "11" # END
+            "11", # END
+            "00000000000" # Quiet zone
         ]
     end
 
     let binary_pattern = Barcode.get_code128("00", :code128c)
-        @test length(binary_pattern) == 5
+        @test length(binary_pattern) == 7
         @test binary_pattern == [
+            "00000000000", # Quiet zone
             "11010011100", # START C
             "11011001100", # 00
             "11001100110", # checksum 2 pattern
             "11000111010", # STOP
-            "11" # END
+            "11", # END
+            "00000000000" # Quiet zone
         ]
     end
 end
 
 @testset "auto" begin
     let binary_pattern = Barcode.get_code128("A", :auto)
-        @test length(binary_pattern) == 5
+        @test length(binary_pattern) == 7
         @test binary_pattern == [
+            "00000000000", # Quiet zone
             "11010000100", # START A
             "10100011000", # A
             "10100011000", # checksum 33 pattern
             "11000111010", # STOP
-            "11" # END
+            "11", # END
+            "00000000000" # Quiet zone
         ]
     end
 
     let binary_pattern = Barcode.get_code128("a", :auto)
-        @test length(binary_pattern) == 5
+        @test length(binary_pattern) == 7
         @test binary_pattern == [
+            "00000000000", # Quiet zone
             "11010010000", # START B
             "10010110000", # a
             "10010000110", # checksum 66 pattern
             "11000111010", # STOP
-            "11" # END
+            "11", # END
+            "00000000000" # Quiet zone
         ]
     end
 
     let binary_pattern = Barcode.get_code128("00", :auto)
-        @test length(binary_pattern) == 5
+        @test length(binary_pattern) == 7
         @test binary_pattern == [
+            "00000000000", # Quiet zone
             "11010011100", # START C
             "11011001100", # 00
             "11001100110", # checksum 2 pattern
             "11000111010", # STOP
-            "11" # END
+            "11", # END
+            "00000000000" # Quiet zone
         ]
     end
 end
@@ -131,8 +143,9 @@ end
     let zip = "12.345-678"
         zip = replace(zip, r"\s|\.|\-" => "")
         binary_pattern = Barcode.get_code128(zip, :code128c)
-        @test length(binary_pattern) == 8
+        @test length(binary_pattern) == 10
         @test binary_pattern == [
+            "00000000000", # Quiet zone
             "11010011100", # START C
             "10110011100", # 12
             "10001011000", # 34
@@ -141,14 +154,16 @@ end
             "10001110110", # checksum pattern 47 = 
                            # (1 * 105 + 1 * 12 + 2 * 34 + 3 * 56 + 4 * 78) % 103
             "11000111010", # STOP
-            "11" # END
+            "11", # END
+            "00000000000", # Quiet zone
         ]
         @test Barcode.pattern_save("../img/zipcode_$zip.png", binary_pattern) === nothing
     end
 
     let binary_pattern = Barcode.get_code128("CSE370", :auto)
-        @test length(binary_pattern) == 10
+        @test length(binary_pattern) == 12
         @test binary_pattern == [
+            "00000000000", # Quiet zone
             "11010000100", # START A
             "10001000110", # C
             "11011101000", # S
@@ -159,7 +174,8 @@ end
             "11001001110", # check sum 20 
                            # (1 * 103 + 1 * 35 + 2 * 51 + 3 * 37 + 4 * 19 + 5 * 23 + 6 * 16)
             "11000111010", # STOP
-            "11" # END
+            "11", # END
+            "00000000000" # Quiet zone
         ]
         @test Barcode.pattern_save("../img/CSE370.png", binary_pattern) === nothing
     end

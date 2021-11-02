@@ -71,10 +71,6 @@ The encoding is returned as a vector of string patterns, with each element corre
 to the encoding of each symbol in `code`.
 """
 function get_code128(code::AbstractString, mode::Symbol = :auto)
-    binary_pattern = Vector{String}()
-
-    # start multiplier (weight) for the check symbol
-    multiplier = 0
 
     if mode == :auto
         if all(isdigit, code)
@@ -96,6 +92,16 @@ function get_code128(code::AbstractString, mode::Symbol = :auto)
             )
         end
     end
+
+    # initialize binary_pattern with the quiet zone, which is at least 10x, where x is
+    # the width of each module, assumed here to be one bit. We use 11x just to have the
+    # same extend as (most of) the other symbols.
+    quiet_zone = ["0"^11]
+    binary_pattern = copy(quiet_zone)
+
+    # start multiplier (weight) for the check symbol
+    multiplier = 0
+
     if mode == :code128a
         # Begins with "START A" code
         append!(binary_pattern, CHARSET[CHARSET[:, mode] .== "START A", :pattern])
@@ -139,6 +145,9 @@ function get_code128(code::AbstractString, mode::Symbol = :auto)
 
     # "END" bar
     push!(binary_pattern, "11")
+
+    # Finish with another quiet zone
+    append!(binary_pattern, quiet_zone)
 
     return binary_pattern
 end
