@@ -1,22 +1,11 @@
 # 
 
 """
-Recebe uma string com 8 dígitos e retorna uma lista 
-com a representação binária dos dígitos de acordo 
-com o conjunto C de caracteres do padrão code 128
-de código de barras (code128 START C).
-
-# Input
-    `code`: string
-        string with eight digits representing a zip code. If there is a dash, the dash will
-        be stripped out of the string.
-
-# Output
-    binary_pattern: Vector{String} 
-        A Vector with eight elements de 8 strings, cada string representando um 
-        caracter do code 128 na representação binária, que
-        é uma string com 11 digitos 1 ou 0, sendo 1 indicando
-        a presença da barra e 0 a ausência. 
+Returns a vector of patterns associated with each character of `code`, according to
+the code128 subtype specified by `mode`, which can be either `:code128a`, `:code128b`,
+or `:code128c`. It also updates the given multiplier and the check_sum addition for
+the `code`. This method does not add the START and STOP symbols, only the patterns of
+the given "chunk" `code`.
 """
 function get_code128_chunk(code::AbstractString, mode, multiplier = 0)
 
@@ -67,6 +56,20 @@ function get_code128_chunk(code::AbstractString, mode, multiplier = 0)
     return binary_pattern, chk_sum, multiplier
 end
 
+"""
+    get_code128(code::AbstractString, mode::Symbol = :auto)
+
+Encode the given `code` according to `mode`, which can be either `:code128a`, `:code128b`,
+`:code128c`, or `:auto`. This is the full encoding; it includes the appropriate START
+and STOP and END patterns.
+
+The mode `:auto` is not fully implemented. It is able to detect whether `code` can be
+encoded in either of the other modes and encode it accordingly, but it does not yet
+implement mixed encoding.
+
+The encoding is returned as a vector of string patterns, with each element corresponding
+to the encoding of each symbol in `code`.
+"""
 function get_code128(code::AbstractString, mode::Symbol = :auto)
     binary_pattern = Vector{String}()
 
