@@ -8,7 +8,7 @@ the image reveals the barcode.
 function pattern_img(binary_pattern; img_height = 20)
     bp = prod(binary_pattern)
     # with a little help from @ScottPJones and @borodi
-    img = Gray.(repeat(reshape(map(==('1'), collect(bp)), 1,:), img_height, 1))
+    img = Gray.(repeat(reshape(map(==('0'), collect(bp)), 1,:), img_height, 1))
     return img
 end
 
