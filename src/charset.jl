@@ -1,13 +1,13 @@
 # 
 
 """
-    const CHARSET
+    const CODE128
 
-`charset` is a DataFrame with columns `value`, `code128a`, `code128b`, `code128c`, and
+`CODE128` is a DataFrame with columns `value`, `code128a`, `code128b`, `code128c`, and
 `pattern`, containing the values and binary patterns for all three modes (or subtypes)
 `code128a`, `code128b` and `code128c` encodings.
 """
-const CHARSET = DataFrame(
+const CODE128 = DataFrame(
     value = 0:106,
     code128a = [
         string.(' ':'_');

@@ -1,7 +1,7 @@
 # 
 
 """
-Returns a vector of patterns associated with each character of `code`, according to
+Return a vector of patterns associated with each character of `code`, according to
 the code128 subtype specified by `mode`, which can be either `:code128a`, `:code128b`,
 or `:code128c`. It also updates the given multiplier and the check_sum addition for
 the `code`. This method does not add the START and STOP symbols, only the patterns of
@@ -9,7 +9,7 @@ the given "chunk" `code`.
 """
 function get_code128_chunk(code::AbstractString, mode, multiplier = 0)
 
-    if mode in (:code128a, :code128b) && !all(x -> string(x) in CHARSET[:, mode], code)
+    if mode in (:code128a, :code128b) && !all(x -> string(x) in CODE128[:, mode], code)
         throw(
             ArgumentError(
                 "Some or all characters in `code` cannot be encoded in `$(Meta.quot(mode))`"
@@ -41,9 +41,9 @@ function get_code128_chunk(code::AbstractString, mode, multiplier = 0)
     # Iterate code and uptade binary_pattern, multiplier and check sum
     for j in 1:step:length(code)
 
-        # get CHARSET row for this iteration
+        # get CODE128 row for this iteration
         s = code[j:j + step - 1]
-        row = CHARSET[CHARSET[:, mode] .== s, :]
+        row = CODE128[CODE128[:, mode] .== s, :]
 
         # update binary_pattern
         append!(binary_pattern, row.pattern)
@@ -75,11 +75,11 @@ function get_code128(code::AbstractString, mode::Symbol = :auto)
     if mode == :auto
         if all(isdigit, code)
             mode = :code128c
-        elseif all(x -> string(x) in CHARSET.code128a, code)
+        elseif all(x -> string(x) in CODE128.code128a, code)
             mode = :code128a
-        elseif all(x -> string(x) in CHARSET.code128b, code)
+        elseif all(x -> string(x) in CODE128.code128b, code)
             mode = :code128b
-        elseif all(x -> string(x) in [CHARSET.code128a; CHARSET.code128b], code)
+        elseif all(x -> string(x) in [CODE128.code128a; CODE128.code128b], code)
             throw(
                 ErrorException(
                     "This `code` requires mixing different modes/subtypes " * 
@@ -104,19 +104,19 @@ function get_code128(code::AbstractString, mode::Symbol = :auto)
 
     if mode == :code128a
         # Begins with "START A" code
-        append!(binary_pattern, CHARSET[CHARSET[:, mode] .== "START A", :pattern])
+        append!(binary_pattern, CODE128[CODE128[:, mode] .== "START A", :pattern])
 
         # Start summation for the check pattern with the value of "START A", which is 103
         chk_sum = 103
     elseif mode == :code128b
         # Begins with "START B" code
-        append!(binary_pattern, CHARSET[CHARSET[:, mode] .== "START B", :pattern])
+        append!(binary_pattern, CODE128[CODE128[:, mode] .== "START B", :pattern])
 
         # Start summation for the check pattern with the value of "START B", which is 104
         chk_sum = 104
     elseif mode == :code128c
         # Begins with "START C" code
-        append!(binary_pattern, CHARSET[CHARSET[:, mode] .== "START C", :pattern])
+        append!(binary_pattern, CODE128[CODE128[:, mode] .== "START C", :pattern])
 
         # Start summation for the check pattern with the value of "START B", which is 105
         chk_sum = 105
@@ -138,10 +138,10 @@ function get_code128(code::AbstractString, mode::Symbol = :auto)
     else
         chk_sum_str = string(chk_sum)
     end
-    append!(binary_pattern, CHARSET[CHARSET.code128c .== chk_sum_str, :pattern])
+    append!(binary_pattern, CODE128[CODE128.code128c .== chk_sum_str, :pattern])
 
     # "STOP" bar
-    append!(binary_pattern, CHARSET[CHARSET.code128c .== "STOP", :pattern])
+    append!(binary_pattern, CODE128[CODE128.code128c .== "STOP", :pattern])
 
     # "END" bar
     push!(binary_pattern, "11")
