@@ -1,32 +1,15 @@
 # 
 
 """
-Return a vector of patterns associated with each character of `code`, according to
+    _get_chunk_pattern(code::AbstractString, ::Val{:code128}, mode, multiplier = 0)
+
+Return a vector of binary patterns associated with each character of `code`, according to
 the code128 subtype specified by `mode`, which can be either `:code128a`, `:code128b`,
-or `:code128c`. It also updates the given multiplier and the check_sum addition for
-the `code`. This method does not add the START and STOP symbols, only the patterns of
-the given "chunk" `code`.
+or `:code128c`. It also updates the given multiplier and the check_sum addition.
+This method does not add the START and STOP symbols, only the patterns of the given "chunk"
+`code`.
 """
-function get_code128_chunk(code::AbstractString, mode, multiplier = 0)
-
-    if mode in (:code128a, :code128b) && !all(x -> string(x) in CODE128[:, mode], code)
-        throw(
-            ArgumentError(
-                "Some or all characters in `code` cannot be encoded in `$(Meta.quot(mode))`"
-            )
-        )
-    end
-    if mode == :code128c && !all(isdigit, code)
-        throw(
-            ArgumentError(
-                "`code` must be composed only of digits for code128c encoding."
-            )
-        )
-    end
-
-    if mode == :code128c && rem(length(code), 2) != 0
-        throw(ArgumentError("`code` must have even length for code128c encoding."))
-    end
+function _get_chunk_pattern(code::AbstractString, ::Val{:code128}, mode, multiplier = 0)
 
     # Initialization
     binary_pattern = Vector{String}()
@@ -57,11 +40,11 @@ function get_code128_chunk(code::AbstractString, mode, multiplier = 0)
 end
 
 """
-    get_code128(code::AbstractString, mode::Symbol = :auto)
+    get_pattern(code::AbstractString, ::Val{:code128}, mode::Symbol)
 
-Encode the given `code` according to `mode`, which can be either `:code128a`, `:code128b`,
-`:code128c`, or `:auto`. This is the full encoding; it includes the appropriate START
-and STOP and END patterns.
+Encode the given `code` according to Code128, and with subtype specified by `mode`,
+which can be either `:code128a`, `:code128b`, `:code128c`, or `:auto`. This is the full
+encoding; it includes the appropriate START, STOP and END patterns, and the quiet zones.
 
 The mode `:auto` is not fully implemented. It is able to detect whether `code` can be
 encoded in either of the other modes and encode it accordingly, but it does not yet
@@ -70,28 +53,7 @@ implement mixed encoding.
 The encoding is returned as a vector of string patterns, with each element corresponding
 to the encoding of each symbol in `code`.
 """
-function get_code128(code::AbstractString, mode::Symbol = :auto)
-
-    if mode == :auto
-        if all(isdigit, code)
-            mode = :code128c
-        elseif all(x -> string(x) in CODE128.code128a, code)
-            mode = :code128a
-        elseif all(x -> string(x) in CODE128.code128b, code)
-            mode = :code128b
-        elseif all(x -> string(x) in [CODE128.code128a; CODE128.code128b], code)
-            throw(
-                ErrorException(
-                    "This `code` requires mixing different modes/subtypes " * 
-                    "of code128, but this has not been implemented yet"
-                )
-            )
-        else
-            throw(
-                ArgumentError("This `code` cannot be encoded in code128")
-            )
-        end
-    end
+function get_pattern(code::AbstractString, ::Val{:code128}, mode::Symbol)
 
     # initialize binary_pattern with the quiet zone, which is at least 10x, where x is
     # the width of each module, assumed here to be one bit. We use 11x just to have the
@@ -103,18 +65,38 @@ function get_code128(code::AbstractString, mode::Symbol = :auto)
     multiplier = 0
 
     if mode == :code128a
+        all(x -> string(x) in CODE128.code128a, code) || throw(
+            ArgumentError(
+                "Some or all characters in `code` cannot be encoded in subtype `Code128A"
+            )
+        )
         # Begins with "START A" code
         append!(binary_pattern, CODE128[CODE128[:, mode] .== "START A", :pattern])
 
         # Start summation for the check pattern with the value of "START A", which is 103
         chk_sum = 103
     elseif mode == :code128b
+        all(x -> string(x) in CODE128.code128b, code) || throw(
+            ArgumentError(
+                "Some or all characters in `code` cannot be encoded in subtype `Code128B"
+            )
+        )
         # Begins with "START B" code
         append!(binary_pattern, CODE128[CODE128[:, mode] .== "START B", :pattern])
 
         # Start summation for the check pattern with the value of "START B", which is 104
         chk_sum = 104
     elseif mode == :code128c
+        all(isdigit, code) || throw(
+            ArgumentError(
+                "`code` must be composed only of digits for code128c encoding."
+            )
+        )
+        isodd(length(code)) && throw(
+            ArgumentError(
+                "`code` must have even length for code128c encoding."
+            )
+        )
         # Begins with "START C" code
         append!(binary_pattern, CODE128[CODE128[:, mode] .== "START C", :pattern])
 
@@ -124,8 +106,8 @@ function get_code128(code::AbstractString, mode::Symbol = :auto)
         throw(ArgumentError("mode `$(Meta.quot(mode))` not implemented"))
     end 
 
-    # get code and auxiliary variables for the encoding 
-    bc, cs, = get_code128_chunk(code, mode, multiplier)
+    # get pattern and auxiliary variables for encoding `code`
+    bc, cs, = _get_chunk_pattern(code, Val(:code128), mode, multiplier)
 
     # update binary_pattern and check sum
     append!(binary_pattern, bc)
@@ -151,3 +133,47 @@ function get_code128(code::AbstractString, mode::Symbol = :auto)
 
     return binary_pattern
 end
+
+"""
+    get_pattern(code::AbstractString, ::Val{:code128})
+
+Encode the given `code` according to Code128. This is the full encoding, including 
+the appropriate START, STOP and END patterns, and the quiet zones.
+
+It attempts to detect whether `code` can be encoded in either of the `code128a`, `code128b`,
+or `code128c` types. It does not yet implement mixed encoding.
+
+The encoding is returned as a vector of string patterns, with each element corresponding
+to the encoding of each symbol in `code`.
+"""
+function get_pattern(code::AbstractString, ::Val{:code128})
+    if all(isdigit, code)
+        get_pattern(code::AbstractString, Val(:code128), :code128c)
+    elseif all(x -> string(x) in CODE128.code128a, code)
+        get_pattern(code::AbstractString, Val(:code128), :code128a)
+    elseif all(x -> string(x) in CODE128.code128b, code)
+        get_pattern(code::AbstractString, Val(:code128), :code128b)
+    elseif all(x -> string(x) in [CODE128.code128a; CODE128.code128b], code)
+        throw(
+            ErrorException(
+                "This `code` requires mixing different modes/subtypes " * 
+                "of code128, but this has not been implemented yet"
+            )
+        )
+    else
+        throw(
+            ArgumentError(
+                "This `code` either cannot be encoded in code128 or requires " *
+                "using isolatin character encoding, which has not been implemented yet"
+            )
+        )
+    end
+end
+
+"""
+    get_pattern(code, encoding_type::Symbol, args...)
+
+Redirect encoding according to the given symbol.
+"""
+get_pattern(code, encoding_type::Symbol, args...) =
+    get_pattern(code, Val(encoding_type), args...)

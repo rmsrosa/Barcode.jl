@@ -2,7 +2,8 @@ using Barcode
 using Test
 
 @testset "code128a chunk" begin
-    let ( binary_pattern, chk_sum, weight ) = Barcode.get_code128_chunk("A", :code128a, 0)
+    let ( binary_pattern, chk_sum, weight ) =
+            Barcode._get_chunk_pattern("A", Val(:code128), :code128a, 0)
         @test length(binary_pattern) == weight == 1
         @test binary_pattern == [
             "10100011000", # A binary_pattern
@@ -10,7 +11,8 @@ using Test
         @test chk_sum % 103 == 33
     end
 
-    let ( binary_pattern, chk_sum, weight ) = Barcode.get_code128_chunk("CSE370", :code128a, 0)
+    let ( binary_pattern, chk_sum, weight ) =
+            Barcode._get_chunk_pattern("CSE370", Val(:code128), :code128a, 0)
         @test length(binary_pattern) == weight == 6
         @test binary_pattern == [
             "10001000110", "11011101000", "10001101000",
@@ -21,7 +23,8 @@ using Test
 end
 
 @testset "code128b chunk" begin
-    let ( binary_pattern, chk_sum, weight ) = Barcode.get_code128_chunk("a", :code128b, 0)
+    let ( binary_pattern, chk_sum, weight ) =
+            Barcode._get_chunk_pattern("a", Val(:code128), :code128b, 0)
         @test length(binary_pattern) == weight == 1
         @test binary_pattern == [
             "10010110000", # A binary_pattern
@@ -29,7 +32,8 @@ end
         @test chk_sum % 103 == 65
     end
 
-    let ( binary_pattern, chk_sum, weight ) = Barcode.get_code128_chunk("#( a%)", :code128b, 0)
+    let ( binary_pattern, chk_sum, weight ) =
+            Barcode._get_chunk_pattern("#( a%)", Val(:code128), :code128b, 0)
         @test length(binary_pattern) == weight == 6
         @test binary_pattern == [
             "10010011000", "10001100100", "11011001100",
@@ -40,7 +44,8 @@ end
 end
 
 @testset "code128c chunk" begin
-    let ( binary_pattern, chk_sum, weight ) = Barcode.get_code128_chunk("00", :code128c, 0)
+    let ( binary_pattern, chk_sum, weight ) =
+            Barcode._get_chunk_pattern("00", Val(:code128), :code128c, 0)
         @test length(binary_pattern) == weight == 1
         @test binary_pattern == [
             "11011001100", # 00 binary_pattern
@@ -48,7 +53,8 @@ end
         @test chk_sum % 103 == 0
     end
 
-    let ( binary_pattern, chk_sum, weight ) = Barcode.get_code128_chunk("123456", :code128c, 0)
+    let ( binary_pattern, chk_sum, weight ) =
+            Barcode._get_chunk_pattern("123456", Val(:code128), :code128c, 0)
         @test length(binary_pattern) == weight == 3
         @test binary_pattern == [
             "10110011100", "10001011000", "11100010110"
@@ -58,7 +64,7 @@ end
 end
 
 @testset "code128" begin
-    let binary_pattern = Barcode.get_code128("A", :code128a)
+    let binary_pattern = Barcode.get_pattern("A", :code128)
         @test length(binary_pattern) == 7
         @test binary_pattern == [
             "00000000000", # Quiet zone
@@ -71,7 +77,7 @@ end
         ]
     end
 
-    let binary_pattern = Barcode.get_code128("a", :code128b)
+    let binary_pattern = Barcode.get_pattern("a", :code128)
         @test length(binary_pattern) == 7
         @test binary_pattern == [
             "00000000000", # Quiet zone
@@ -84,7 +90,7 @@ end
         ]
     end
 
-    let binary_pattern = Barcode.get_code128("00", :code128c)
+    let binary_pattern = Barcode.get_pattern("00", :code128)
         @test length(binary_pattern) == 7
         @test binary_pattern == [
             "00000000000", # Quiet zone
@@ -99,7 +105,7 @@ end
 end
 
 @testset "auto" begin
-    let binary_pattern = Barcode.get_code128("A", :auto)
+    let binary_pattern = Barcode.get_pattern("A", :code128)
         @test length(binary_pattern) == 7
         @test binary_pattern == [
             "00000000000", # Quiet zone
@@ -112,7 +118,7 @@ end
         ]
     end
 
-    let binary_pattern = Barcode.get_code128("a", :auto)
+    let binary_pattern = Barcode.get_pattern("a", :code128)
         @test length(binary_pattern) == 7
         @test binary_pattern == [
             "00000000000", # Quiet zone
@@ -125,7 +131,7 @@ end
         ]
     end
 
-    let binary_pattern = Barcode.get_code128("00", :auto)
+    let binary_pattern = Barcode.get_pattern("00", :code128)
         @test length(binary_pattern) == 7
         @test binary_pattern == [
             "00000000000", # Quiet zone
@@ -142,7 +148,7 @@ end
 @testset "save img" begin
     let zip = "12.345-678"
         zip = replace(zip, r"\s|\.|\-" => "")
-        binary_pattern = Barcode.get_code128(zip, :code128c)
+        binary_pattern = Barcode.get_pattern(zip, :code128)
         @test length(binary_pattern) == 10
         @test binary_pattern == [
             "00000000000", # Quiet zone
@@ -160,7 +166,7 @@ end
         @test Barcode.pattern_img("../img/zipcode_$zip.png", binary_pattern) === nothing
     end
 
-    let binary_pattern = Barcode.get_code128("CSE370", :auto)
+    let binary_pattern = Barcode.get_pattern("CSE370", :code128)
         @test length(binary_pattern) == 12
         @test binary_pattern == [
             "00000000000", # Quiet zone
