@@ -40,6 +40,96 @@ function _get_chunk_pattern(code::AbstractString, ::Val{:code128}, mode, multipl
 end
 
 """
+    get_pattern(code::Vector{<:AbstractString}, ::Val{:code128})
+
+Return the binary pattern for a given vector of code128 symbols.
+
+Currently, the `code` must start with either `START A`, `START B`, or `START C`
+and must end with `STOP`.
+
+The checksum must either be already computed or one can add an element `CHECKSUM`
+for the check sum to be computed and included at the same index where this directive
+appears.
+
+# Example
+
+```jldoctest
+julia> binary_pattern = get_pattern(["START C", "00", "01", "32", "CHECKSUM", "STOP"], Val(:code128))
+9-element Vector{String}:
+ "00000000000"
+ "11010011100"
+ "11011001100"
+ "11001101100"
+ "11000110110"
+ "11110100010"
+ "11000111010"
+ "11"
+ "00000000000"
+
+julia> binary_pattern = get_pattern(["START A", "A", "B", "C", "CHECKSUM", "STOP"], Val(:code128))
+8-element Vector{String}:
+ "00000000000"
+ "11010000100"
+ "10100011000"
+ "10001011000"
+ "10001000110"
+ "11000111010"
+ "11"
+ "00000000000"
+```
+"""
+function get_pattern(code::Vector{<:AbstractString}, ::Val{:code128})
+
+    match(r"^START [A|B|C]$", first(code)) !== nothing || throw(
+        ArgumentError(
+            "First element of `code` should be either `START A`, `START B` or `START C`"
+        )
+    )
+
+    last(code) == "STOP" || throw(
+        ArgumentError(
+            "Last element of `code` should be `STOP`"
+        )
+    )
+
+    subtype = Symbol("code128$(lowercase(first(code)[end]))")
+
+    # initialize binary_pattern with the quiet zone, which is at least 10x, where x is
+    # the width of each module, assumed here to be one bit. We use 11x just to have the
+    # same length as the other symbols (except the double bar termination symbol).
+    quiet_zone = ["0"^11]
+    binary_pattern = copy(quiet_zone)
+
+    multiplier = 0
+    chk_sum = 0
+
+    for c in code
+
+        # multiplier is 1 for the first two symbols
+        if multiplier ≥ 1 || !startswith(c, "START ")
+            multiplier += 1
+        end
+
+        if c == "CHECKSUM"
+            chk_sum_str = string(rem(chk_sum, 103), pad = 2)
+            append!(binary_pattern, CODE128[CODE128[:, subtype] .== chk_sum_str, :pattern])
+            chk_sum += multiplier * chk_sum
+        else
+            row = CODE128[CODE128[:, subtype] .== c, :]
+            append!(binary_pattern, row.pattern)
+            chk_sum += multiplier * row.value[1]
+        end
+    end
+    # "END" bars
+    push!(binary_pattern, "11")
+
+    # Quiet zone
+    append!(binary_pattern, quiet_zone)
+
+    return binary_pattern
+end
+
+"""
     get_pattern(code::AbstractString, ::Val{:code128}, mode::Symbol)
 
 Encode the given `code` according to Code128, and with subtype specified by `mode`,
@@ -121,12 +211,6 @@ function get_pattern(code::AbstractString, ::Val{:code128}, mode::Symbol)
         chk_sum_str = string(chk_sum)
     end
     append!(binary_pattern, CODE128[CODE128.code128c .== chk_sum_str, :pattern])
-
-    # "STOP" bar
-    append!(binary_pattern, CODE128[CODE128.code128c .== "STOP", :pattern])
-
-    # "END" bar
-    push!(binary_pattern, "11")
 
     # Finish with another quiet zone
     append!(binary_pattern, quiet_zone)
