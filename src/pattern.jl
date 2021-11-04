@@ -70,12 +70,12 @@ function get_pattern(encoding::Vector{<:AbstractString}, ::Val{:code128})
     # initialize binary_pattern with the quiet zone, which is at least 10x, where x is
     # the width of each module, assumed here to be one bit. We use 11x just to have the
     # same length as the other symbols (except the double bar termination symbol).
-    quiet_zone = ["0"^11]
-    binary_pattern = copy(quiet_zone)
+    quiet_zone = "0"^11
+    binary_pattern = [quiet_zone]
 
-    row = CODE128[CODE128[:, subtype] .== first(encoding), :]
-    append!(binary_pattern, row.pattern)
-    chk_sum = row.value[1]
+    nrow = findfirst(==(first(encoding)), CODE128[:, subtype])
+    push!(binary_pattern, CODE128.pattern[nrow])
+    chk_sum = CODE128.value[nrow]
     multiplier = 0
 
     for c in encoding[2:end]
@@ -83,15 +83,17 @@ function get_pattern(encoding::Vector{<:AbstractString}, ::Val{:code128})
         multiplier += 1
 
         if c == "CHECKSUM"
-            append!(
-                binary_pattern,
-                CODE128[CODE128[:, :value] .== rem(chk_sum, 103), :pattern]
-            )
+            push!(binary_pattern, CODE128.pattern[rem(chk_sum, 103) + 1])
             chk_sum += multiplier * chk_sum
         else
-            row = CODE128[CODE128[:, nextsubtype] .== c, :]
-            append!(binary_pattern, row.pattern)
-            chk_sum += multiplier * row.value[1]
+            nrow = findfirst(==(c), CODE128[:, nextsubtype])
+            nrow === nothing && throw(
+                ArgumentError(
+                    "$c is not part of subtype $(titlecase(string(nextsubtype))) of Code128"
+                )
+            )
+            push!(binary_pattern, CODE128.pattern[nrow])
+            chk_sum += multiplier * CODE128.value[nrow]
 
             nextsubtype = subtype
             m = match(r"^Code (A|B|C)$", c)
@@ -111,7 +113,7 @@ function get_pattern(encoding::Vector{<:AbstractString}, ::Val{:code128})
     push!(binary_pattern, "11")
 
     # Quiet zone
-    append!(binary_pattern, quiet_zone)
+    push!(binary_pattern, quiet_zone)
 
     return binary_pattern
 end
