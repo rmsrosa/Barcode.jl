@@ -1,11 +1,11 @@
 # Get pattern
 
 """
-    get_pattern(code::Vector{<:AbstractString}, ::Val{:code128})
+    get_pattern(encoding::Vector{<:AbstractString}, ::Val{:code128})
 
 Return the binary pattern for a given vector of code128 symbols.
 
-Currently, the `code` must start with either `START A`, `START B`, or `START C`
+Currently, the `encoding` must start with either `START A`, `START B`, or `START C`
 and must end with `STOP`.
 
 The checksum must either be already computed or one can add an element `CHECKSUM`
@@ -65,6 +65,7 @@ function get_pattern(encoding::Vector{<:AbstractString}, ::Val{:code128})
     )
 
     subtype = Symbol("code128$(lowercase(m.captures[1]))")
+    nextsubtype = subtype
 
     # initialize binary_pattern with the quiet zone, which is at least 10x, where x is
     # the width of each module, assumed here to be one bit. We use 11x just to have the
@@ -88,9 +89,22 @@ function get_pattern(encoding::Vector{<:AbstractString}, ::Val{:code128})
             )
             chk_sum += multiplier * chk_sum
         else
-            row = CODE128[CODE128[:, subtype] .== c, :]
+            row = CODE128[CODE128[:, nextsubtype] .== c, :]
             append!(binary_pattern, row.pattern)
             chk_sum += multiplier * row.value[1]
+
+            nextsubtype = subtype
+            m = match(r"^Code (A|B|C)$", c)
+            if m !== nothing
+                subtype = nextsubtype = Symbol("code128$(lowercase(m.captures[1]))")
+            end
+
+
+            m = match(r"^Shift (A|B)$", c)
+            if m !== nothing
+                nextsubtype = Symbol("code128$(lowercase(m.captures[1]))")
+            end
+
         end
     end
     # "END" bars
@@ -125,9 +139,9 @@ function get_pattern(code::AbstractString, ::Val{:code128}, mode::Symbol = :auto
 end
 
 """
-    get_pattern(code, encoding_type::Symbol, args...)
+    get_pattern(arg, encoding_type::Symbol, args...)
 
 Redirect dispatch according to the given symbol `encoding_type`.
 """
-get_pattern(code, encoding_type::Symbol, args...) =
-    get_pattern(code, Val(encoding_type), args...)
+get_pattern(arg, encoding_type::Symbol, args...) =
+    get_pattern(arg, Val(encoding_type), args...)
