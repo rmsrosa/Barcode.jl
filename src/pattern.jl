@@ -39,21 +39,32 @@ julia> binary_pattern = get_pattern(["START A", "A", "B", "C", "CHECKSUM", "STOP
  "00000000000"
 ```
 """
-function get_pattern(code::Vector{<:AbstractString}, ::Val{:code128})
+function get_pattern(encoding::Vector{<:AbstractString}, ::Val{:code128})
 
-    match(r"^START [A|B|C]$", first(code)) !== nothing || throw(
+    m = match(r"^START (A|B|C)$", first(encoding))
+    m !== nothing || throw(
         ArgumentError(
             "First element of `code` should be either `START A`, `START B` or `START C`"
         )
     )
 
-    last(code) == "STOP" || throw(
+    last(encoding) == "STOP" || throw(
         ArgumentError(
             "Last element of `code` should be `STOP`"
         )
     )
 
-    subtype = Symbol("code128$(lowercase(first(code)[end]))")
+    count(encoding .=="STOP") == 1 || throw(
+        ArgumentError(
+            """There should be only one "STOP" in the encoding sequence"""
+        )
+    )
+
+    count(match.(r"^START [A|B|C]$", encoding) .!== nothing) == 1 || throw(
+        """There should be only one r"START [A|B|C]" in the encoding sequence"""
+    )
+
+    subtype = Symbol("code128$(lowercase(m.captures[1]))")
 
     # initialize binary_pattern with the quiet zone, which is at least 10x, where x is
     # the width of each module, assumed here to be one bit. We use 11x just to have the
@@ -61,21 +72,14 @@ function get_pattern(code::Vector{<:AbstractString}, ::Val{:code128})
     quiet_zone = ["0"^11]
     binary_pattern = copy(quiet_zone)
 
+    row = CODE128[CODE128[:, subtype] .== first(encoding), :]
+    append!(binary_pattern, row.pattern)
+    chk_sum = row.value[1]
     multiplier = 0
-    after_start = false
-    chk_sum = 0
 
-    for c in code
+    for c in encoding[2:end]
 
-        # multiplier is 1 for the first START symbol and the subsequent symbol
-        if after_start == true
-            after_start = false
-        else
-            multiplier += 1
-        end
-        if multiplier == 1 && match(r"^START (A|B|C)$", c) !== nothing
-            after_start = true
-        end
+        multiplier += 1
 
         if c == "CHECKSUM"
             append!(
