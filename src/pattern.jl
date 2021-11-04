@@ -44,25 +44,18 @@ function get_pattern(encoding::Vector{<:AbstractString}, ::Val{:code128})
     m = match(r"^START (A|B|C)$", first(encoding))
     m !== nothing || throw(
         ArgumentError(
-            "First element of `code` should be either `START A`, `START B` or `START C`"
-        )
+            "First element of `code` should be either `START A`, `START B` or `START C`",
+        ),
     )
 
-    last(encoding) == "STOP" || throw(
-        ArgumentError(
-            "Last element of `code` should be `STOP`"
-        )
-    )
+    last(encoding) == "STOP" ||
+        throw(ArgumentError("Last element of `code` should be `STOP`"))
 
-    count(encoding .=="STOP") == 1 || throw(
-        ArgumentError(
-            """There should be only one "STOP" in the encoding sequence"""
-        )
-    )
+    count(encoding .== "STOP") == 1 ||
+        throw(ArgumentError("""There should be only one "STOP" in the encoding sequence"""))
 
-    count(match.(r"^START [A|B|C]$", encoding) .!== nothing) == 1 || throw(
-        """There should be only one r"START [A|B|C]" in the encoding sequence"""
-    )
+    count(match.(r"^START [A|B|C]$", encoding) .!== nothing) == 1 ||
+        throw("""There should be only one r"START [A|B|C]" in the encoding sequence""")
 
     subtype = Symbol("code128$(lowercase(m.captures[1]))")
     nextsubtype = subtype
@@ -83,14 +76,14 @@ function get_pattern(encoding::Vector{<:AbstractString}, ::Val{:code128})
         multiplier += 1
 
         if c == "CHECKSUM"
-            push!(binary_pattern, CODE128.pattern[rem(chk_sum, 103) + 1])
+            push!(binary_pattern, CODE128.pattern[rem(chk_sum, 103)+1])
             chk_sum += multiplier * chk_sum
         else
             nrow = findfirst(==(c), CODE128[:, nextsubtype])
             nrow === nothing && throw(
                 ArgumentError(
-                    "$c is not part of subtype $(titlecase(string(nextsubtype))) of Code128"
-                )
+                    "$c is not part of subtype $(titlecase(string(nextsubtype))) of Code128",
+                ),
             )
             push!(binary_pattern, CODE128.pattern[nrow])
             chk_sum += multiplier * CODE128.value[nrow]

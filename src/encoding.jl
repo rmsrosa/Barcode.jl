@@ -18,21 +18,18 @@ function get_encoding(code, ::Val{:code128}, mode::Symbol = :auto)
     if mode in (:code128a, :code128b)
         all(x -> string(x) in CODE128[:, mode], code) || throw(
             ArgumentError(
-                "The given `code` cannot be encoded in subtype $(titlecase(string(mode)))"
-            )
+                "The given `code` cannot be encoded in subtype $(titlecase(string(mode)))",
+            ),
         )
         push!(encoding, "START $(uppercase(string(mode)[end]))")
         append!(encoding, string.(collect(code)))
         push!(encoding, "CHECKSUM")
         push!(encoding, "STOP")
     elseif mode == :code128c
-        ( all(isdigit, code) && iseven(length(code)) ) || throw(
-            ArgumentError(
-                "The given `code` cannot be encoded in subtype Code128A"
-            )
-        )
+        (all(isdigit, code) && iseven(length(code))) ||
+            throw(ArgumentError("The given `code` cannot be encoded in subtype Code128A"))
         push!(encoding, "START C")
-        append!(encoding, [code[j:j+1] for j in 1:2:length(code)])
+        append!(encoding, [code[j:j+1] for j = 1:2:length(code)])
         push!(encoding, "CHECKSUM")
         push!(encoding, "STOP")
     elseif mode == :auto
@@ -41,7 +38,7 @@ function get_encoding(code, ::Val{:code128}, mode::Symbol = :auto)
         elseif all(x -> string(x) in CODE128.code128a, code)
             encoding = get_encoding(code, Val(:code128), :code128a)
         elseif all(x -> string(x) in CODE128.code128b, code)
-                encoding = get_encoding(code, Val(:code128), :code128b)
+            encoding = get_encoding(code, Val(:code128), :code128b)
         else
             throw(ArgumentError("mode `:auto` not yet fully implemented"))
         end

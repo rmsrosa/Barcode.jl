@@ -10,21 +10,60 @@
 const CODE128 = DataFrame(
     value = 0:106,
     code128a = [
-        string.(' ':'_');
+        string.(' ':'_')
         [
-            "NUL", "SOH", "STX", "ETX", "EOT", "ENQ", "ACK", "BEL", "BS", "HT", "LF", "VT",
-            "FF", "CR", "SO", "SI", "DLE", "DC1", "DC2", "DC3", "DC4", "NAK", "SYN", "ETB",
-            "CAN", "EM", "SUB", "ESC", "FS", "GS", "RS", "US", "FNC 3", "FNC 2", "Shift B",
-            "Code C", "Code B", "FNC 4", "FNC 1", "START A", "START B", "START C", "STOP"
+            "NUL",
+            "SOH",
+            "STX",
+            "ETX",
+            "EOT",
+            "ENQ",
+            "ACK",
+            "BEL",
+            "BS",
+            "HT",
+            "LF",
+            "VT",
+            "FF",
+            "CR",
+            "SO",
+            "SI",
+            "DLE",
+            "DC1",
+            "DC2",
+            "DC3",
+            "DC4",
+            "NAK",
+            "SYN",
+            "ETB",
+            "CAN",
+            "EM",
+            "SUB",
+            "ESC",
+            "FS",
+            "GS",
+            "RS",
+            "US",
+            "FNC 3",
+            "FNC 2",
+            "Shift B",
+            "Code C",
+            "Code B",
+            "FNC 4",
+            "FNC 1",
+            "START A",
+            "START B",
+            "START C",
+            "STOP",
         ]
     ],
     code128b = [
-        string.(' ':'~');
-        ["DEL", "FNC 3", "FNC 2", "Shift A", "Code C", "FNC 4", "Code A", "FNC 1"];
+        string.(' ':'~')
+        ["DEL", "FNC 3", "FNC 2", "Shift A", "Code C", "FNC 4", "Code A", "FNC 1"]
         ["START A", "START B", "START C", "STOP"]
     ],
     code128c = [
-        replace.(lpad.(0:99, 2), ' '  => '0');
+        replace.(lpad.(0:99, 2), ' ' => '0')
         ["Code B", "Code A", "FNC 1", "START A", "START B", "START C", "STOP"]
     ],
     pattern = [
@@ -134,6 +173,6 @@ const CODE128 = DataFrame(
         "11010000100",
         "11010010000",
         "11010011100",
-        "11000111010"
-    ]
+        "11000111010",
+    ],
 )
