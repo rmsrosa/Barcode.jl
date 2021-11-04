@@ -4,8 +4,8 @@ using DataFrames
 using Images
 using FileIO
 
-include("charset.jl")
-include("binarypattern.jl")
+include("code128_charset.jl")
+include("encoding_and_pattern.jl")
 include("utils.jl")
 
 end
