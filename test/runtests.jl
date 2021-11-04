@@ -107,6 +107,16 @@ end
             "00000000000", # Quiet zone
         ]
     end
+
+    let binary_pattern = Barcode.get_pattern(
+        [
+            "START C", "FNC 1", "42", "18", "40", "20", "50",
+            "Code A",  "0", "CHECKSUM", "STOP"
+        ],
+        :code128
+    )
+        
+    end
 end
 
 @testset "save img" begin
