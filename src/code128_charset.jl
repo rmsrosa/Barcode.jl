@@ -25,8 +25,7 @@ const CODE128 = DataFrame(
     ],
     code128c = [
         replace.(lpad.(0:99, 2), ' '  => '0');
-        string.(100:102);
-        ["START A", "START B", "START C", "STOP"]
+        ["Code B", "Code A", "FNC 1", "START A", "START B", "START C", "STOP"]
     ],
     pattern = [
         "11011001100",
