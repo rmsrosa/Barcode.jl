@@ -5,7 +5,8 @@ using Images
 using FileIO
 
 include("code128_charset.jl")
-include("encoding_and_pattern.jl")
+include("encoding.jl")
+include("pattern.jl")
 include("utils.jl")
 
 end
