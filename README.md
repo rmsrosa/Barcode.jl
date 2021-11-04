@@ -28,7 +28,8 @@ julia> zip = replace(zip, r"\s|\.|\-" => "")
 "12345678"
 
 julia> binary_pattern = Barcode.get_pattern(zip, :code128)
-8-element Vector{String}:
+10-element Vector{String}:
+ "00000000000"
  "11010011100"
  "10110011100"
  "10001011000"
@@ -37,27 +38,70 @@ julia> binary_pattern = Barcode.get_pattern(zip, :code128)
  "10001110110"
  "11000111010"
  "11"
+ "00000000000"
 
 julia> prod(binary_pattern)
-"1101001110010110011100100010110001110001011011000010100100011101101100011101011"
+"00000000000110100111001011001110010001011000111000101101100001010010001110110110001110101100000000000"
 ```
 
 Once `binary_pattern` is obtained, one can create a Gray Image array and/or save the image to file with `Barcode.pattern_img(binary_pattern; img_height = 20)` and `Barcode.pattern_img(filename, binary_pattern; img_height = 20)`.
 
-Here is the result of saving the zip code above to a PNG file with `Barcode.pattern_img("zipcode_12345678.png", binary_pattern)`:
+Here is the result of saving the zip code above to a PNG file with `Barcode.pattern_img("img/zipcode_12345678.png", binary_pattern)`:
 
 ![Zip Code 12.345-678](img/zipcode_12345678.png)
 
-Here is another example which uses `code128a`:
+Here is another example which is detected as `code128a`:
 
 ```julia
-julia> binary_pattern = Barcode.get_pattern(zip, :code128);
+julia> binary_pattern = Barcode.get_pattern("CSE370", :code128)
+12-element Vector{String}:
+ "00000000000"
+ "11010000100"
+ "10001000110"
+ "11011101000"
+ "10001101000"
+ "11001011100"
+ "11101101110"
+ "10011101100"
+ "11001001110"
+ "11000111010"
+ "11"
 
-julia> Barcode.pattern_img("../img/CSE370.png", binary_pattern)
+julia> Barcode.pattern_img("img/CSE370.png", binary_pattern)
 ```
 
 ![CSE370](img/CSE370.png)
 
+The pattern is obtained by first encoding the given code in a symbolic vectorial representation and then send to another dispatch of the function above. For example,
+
+```julia
+julia> encoding = get_encoding("CSE370", :code128)
+9-element Vector{String}:
+ "START A"
+ "C"
+ "S"
+ "E"
+ "3"
+ "7"
+ "0"
+ "CHECKSUM"
+ "STOP"
+
+julia> get_pattern(encoding, :code128)
+12-element Vector{String}:
+ "00000000000"
+ "11010000100"
+ "10001000110"
+ "11011101000"
+ "10001101000"
+ "11001011100"
+ "11101101110"
+ "10011101100"
+ "11001001110"
+ "11000111010"
+ "11"
+ "00000000000"
+```
 ## To-do
 
 There are still a few things to be done in regards to the generated images, and with the image formats to play along with other graphic tools.
