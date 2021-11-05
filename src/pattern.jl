@@ -22,18 +22,19 @@ julia> binary_pattern = get_pattern(["START C", "00", "01", "32", "CHECKSUM", "S
  "11011001100"
  "11001101100"
  "11000110110"
- "11110100010"
+ "10111101110"
  "11000111010"
  "11"
  "00000000000"
 
 julia> binary_pattern = get_pattern(["START A", "A", "B", "C", "CHECKSUM", "STOP"], Val(:code128))
-8-element Vector{String}:
+9-element Vector{String}:
  "00000000000"
  "11010000100"
  "10100011000"
  "10001011000"
  "10001000110"
+ "11011001100"
  "11000111010"
  "11"
  "00000000000"
