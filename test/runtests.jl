@@ -81,6 +81,24 @@ end
             "00000000000", # Quiet zone
         ]
     end
+
+    let binary_pattern = Barcode.get_pattern("\x02A\tB\x07\x03", :code128)
+        @test length(binary_pattern) == 12
+        @test binary_pattern == [
+            "00000000000", # Quiet zone
+            "11010000100", # START A
+            "10010000110", # \x02 = STX = Start of Text
+            "10100011000", # A
+            "10000110100", # \t = Horizontal Tab
+            "10001011000", # B
+            "10011010000", # \x07 = Bell
+            "10000101100", # \x03 = ETX = End of Text
+            "10001100100", # CHECKSUM
+            "11000111010", # STOP
+            "11", # END
+            "00000000000", # Quiet zone
+        ]
+    end
 end
 
 @testset "mixed subtypes" begin
