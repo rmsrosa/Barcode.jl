@@ -10,40 +10,9 @@
 const CODE128 = DataFrame(
     value = 0:106,
     code128a = [
-        string.(' ':'_')
+        string.(Char(32):Char(95)) # ' ' to '_'
+        string.(Char(0):Char(31)) # NUL to US
         [
-            "NUL",
-            "SOH",
-            "STX",
-            "ETX",
-            "EOT",
-            "ENQ",
-            "ACK",
-            "BEL",
-            "BS",
-            "HT",
-            "LF",
-            "VT",
-            "FF",
-            "CR",
-            "SO",
-            "SI",
-            "DLE",
-            "DC1",
-            "DC2",
-            "DC3",
-            "DC4",
-            "NAK",
-            "SYN",
-            "ETB",
-            "CAN",
-            "EM",
-            "SUB",
-            "ESC",
-            "FS",
-            "GS",
-            "RS",
-            "US",
             "FNC 3",
             "FNC 2",
             "Shift B",
@@ -58,12 +27,12 @@ const CODE128 = DataFrame(
         ]
     ],
     code128b = [
-        string.(' ':'~')
-        ["DEL", "FNC 3", "FNC 2", "Shift A", "Code C", "FNC 4", "Code A", "FNC 1"]
+        string.(Char(32):Char(127)) # SPACE to DEL
+        ["FNC 3", "FNC 2", "Shift A", "Code C", "FNC 4", "Code A", "FNC 1"]
         ["START A", "START B", "START C", "STOP"]
     ],
     code128c = [
-        replace.(lpad.(0:99, 2), ' ' => '0')
+        string.(0:99, pad = 2)
         ["Code B", "Code A", "FNC 1", "START A", "START B", "START C", "STOP"]
     ],
     pattern = [
