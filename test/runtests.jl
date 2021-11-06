@@ -104,7 +104,7 @@ end
 @testset "mixed subtypes" begin
 
     let binary_pattern = Barcode.get_pattern(
-            ["START A", "A", "B", "Shift B", "a", "A", "Code C", "00", "CHECKSUM", "STOP"],
+            ["START A", "A", "B", "SHIFT B", "a", "A", "CODE C", "00", "CHECKSUM", "STOP"],
             :code128,
         )
         @test length(binary_pattern) == 13
@@ -113,10 +113,10 @@ end
             "11010000100", # "START A" (103)
             "10100011000", # "A" (33)
             "10001011000", # "B" (34)
-            "11110100010", # "Shift B" (98)
+            "11110100010", # "SHIFT B" (98)
             "10010110000", # "a" (65)
             "10100011000", # "A" (33)
-            "10111011110", # "Code C" (99)
+            "10111011110", # "CODE C" (99)
             "11011001100", # "00" (0)
             "11000010010", # CHECKSUM (75)
             # ( 103 + 1 * 33 + 2 * 34 + 3 * 98 + 4 * 65 + 5 * 33 + 6 * 99 + 7 * 0 ) % 103
@@ -135,7 +135,7 @@ end
                 "40",
                 "20",
                 "50",
-                "Code A",
+                "CODE A",
                 "0",
                 "CHECKSUM",
                 "STOP",

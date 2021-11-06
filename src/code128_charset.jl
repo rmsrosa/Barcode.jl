@@ -15,9 +15,9 @@ const CODE128 = DataFrame(
         [
             "FNC 3",
             "FNC 2",
-            "Shift B",
-            "Code C",
-            "Code B",
+            "SHIFT B",
+            "CODE C",
+            "CODE B",
             "FNC 4",
             "FNC 1",
             "START A",
@@ -28,12 +28,12 @@ const CODE128 = DataFrame(
     ],
     code128b = [
         string.(Char(32):Char(127)) # SPACE to DEL
-        ["FNC 3", "FNC 2", "Shift A", "Code C", "FNC 4", "Code A", "FNC 1"]
+        ["FNC 3", "FNC 2", "SHIFT A", "CODE C", "FNC 4", "CODE A", "FNC 1"]
         ["START A", "START B", "START C", "STOP"]
     ],
     code128c = [
         string.(0:99, pad = 2)
-        ["Code B", "Code A", "FNC 1", "START A", "START B", "START C", "STOP"]
+        ["CODE B", "CODE A", "FNC 1", "START A", "START B", "START C", "STOP"]
     ],
     pattern = [
         "11011001100",

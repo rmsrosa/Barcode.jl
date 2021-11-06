@@ -90,13 +90,13 @@ function get_pattern(encoding::Vector{<:AbstractString}, ::Val{:code128})
             chk_sum += multiplier * CODE128.value[nrow]
 
             nextsubtype = subtype
-            m = match(r"^Code (A|B|C)$", c)
+            m = match(r"^CODE (A|B|C)$", c)
             if m !== nothing
                 subtype = nextsubtype = Symbol("code128$(lowercase(m.captures[1]))")
             end
 
 
-            m = match(r"^Shift (A|B)$", c)
+            m = match(r"^SHIFT (A|B)$", c)
             if m !== nothing
                 nextsubtype = Symbol("code128$(lowercase(m.captures[1]))")
             end
