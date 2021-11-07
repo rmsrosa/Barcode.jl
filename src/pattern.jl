@@ -5,12 +5,12 @@ function _get_pattern_code128(encoding::Vector{<:AbstractString})
     m = match(r"^START (A|B|C)$", first(encoding))
     m !== nothing || throw(
         ArgumentError(
-            "First element of `code` should be either `START A`, `START B` or `START C`",
+            "First element of `encoding` should be either `START A`, `START B` or `START C`",
         ),
     )
 
     last(encoding) == "STOP" ||
-        throw(ArgumentError("Last element of `code` should be `STOP`"))
+        throw(ArgumentError("Last element of `encoding` should be `STOP`"))
 
     count(encoding .== "STOP") == 1 ||
         throw(ArgumentError("""There should be only one "STOP" in the encoding sequence"""))
@@ -146,7 +146,7 @@ end
 Retrieve the binary pattern for the given `data`, according to the encoding Code128.
 
 If `mode` is set to either `:code128a`, `:code128b`, or `:code128c`, it returns the encoding
-following the corresponding subtype. It throws an `ArgumentError` if the given `code` is not
+following the corresponding subtype. It throws an `ArgumentError` if the given `data` is not
 suitable for encoding with the given subtype.
 
 If `mode` is not given or if it is set to `:auto`, which is the default, then it attempts
@@ -154,7 +154,7 @@ to use either of these subtypes or a combination of them. It throws an `Argument
 not possible to do so.
 
 The encoding is returned as a vector of string patterns, with each element corresponding
-to the encoding of each symbol in `code`, and appended with the proper quiet zones and the
+to the encoding of each symbol in `data`, and appended with the proper quiet zones and the
 `START`, `STOP`, checksum, and ending bar patterns.
 """
 function get_pattern(data::AbstractString, encoding_type::Symbol)
