@@ -40,7 +40,7 @@ julia> binary_pattern = get_pattern(["START A", "A", "B", "C", "CHECKSUM", "STOP
  "00000000000"
 ```
 """
-function get_pattern(encoding::Vector{<:AbstractString}, ::Val{:code128})
+function _get_pattern_code128(encoding::Vector{<:AbstractString})
 
     m = match(r"^START (A|B|C)$", first(encoding))
     m !== nothing || throw(
@@ -112,6 +112,19 @@ function get_pattern(encoding::Vector{<:AbstractString}, ::Val{:code128})
     return binary_pattern
 end
 
+function get_pattern(encoding::Vector{<:AbstractString}, encoding_type::Symbol)
+    if encoding_type in (:code128, :code128a, :code128b, :code128c)
+        pattern = _get_pattern_code128(encoding)
+    else
+        throw(
+            ArgumentError(
+                "Pattern encoding for encoding type `$encoding_type` not implemented"
+            )
+        )
+    end
+    return pattern
+end
+
 """
     get_pattern(code::AbstractString, ::Val{:code128}, mode::Symbol = :auto)
 
@@ -129,15 +142,7 @@ The encoding is returned as a vector of string patterns, with each element corre
 to the encoding of each symbol in `code`, and appended with the proper quiet zones and the
 `START`, `STOP`, checksum, and ending bar patterns.
 """
-function get_pattern(code::AbstractString, ::Val{:code128}, mode::Symbol = :auto)
-    encoding = get_encoding(code, Val(:code128), mode)
-    return get_pattern(encoding, Val(:code128))
+function get_pattern(code::AbstractString, encoding_type::Symbol)
+    encoding = get_encoding(code, encoding_type)
+    return get_pattern(encoding, encoding_type)
 end
-
-"""
-    get_pattern(arg, encoding_type::Symbol, args...)
-
-Redirect dispatch according to the given symbol `encoding_type`.
-"""
-get_pattern(arg, encoding_type::Symbol, args...) =
-    get_pattern(arg, Val(encoding_type), args...)

@@ -1,5 +1,7 @@
 # Get encoding
 
+val_symb(::Val{symb}) where symb = symb
+
 """
     get_encoding(data::AbstractString, ::Val{code128}; mode::Symbol)
 
@@ -15,6 +17,78 @@ If `mode` is not given or if it is set to `:auto`, which is the default, the met
 to use either of these subtypes or a combination of them. It throws an `ErrorException` if a
 proper way is not found. Please, report an issue if this happens.
 """
+function get_encoding(data::AbstractString, ::Val{:code128a})
+    isascii(data) || throw(
+        ArgumentError(
+            "The given `data` is not fully ASCII and cannot be encoded in Code128"
+        ),
+    )
+    @inbounds for i = 1:ncodeunits(s)
+        codeunit(s, i) ≥ 96 && throw(
+            ArgumentError(
+                "The given ascii `data` contains lowercase letters or characters outside "
+                * "the range 0 - 95 used in code128a"
+            )
+        )
+    end
+    return get_encoding(data, :code128)
+end
+
+function get_encoding(
+        data::AbstractString, # ::Val{subtype}) where {subtype}
+        subtype::Union{Val{:code128a}, Val{:code128b}, Val{:code128c}}
+)
+    isascii(data) || throw(
+        ArgumentError(
+            "The given `data` is not fully ASCII and cannot be encoded in Code128"
+        ),
+    )
+    @inbounds for i = 1:ncodeunits(data)
+        subtype == :code128a && codeunit(data, i) ≥ 96 && throw(
+            ArgumentError(
+                "The given ascii `data` contains lowercase letters or characters outside " *
+                "the range 0 - 95 and cannot be encoded in subtype Code128A"
+            )
+        )
+        subtype == :code128b && codeunit(data, i) ≤ 31 && throw(
+            ArgumentError(
+                "The given ascii `data` contains symbology characters outside the range " *
+                "32 - 127 and cannot be fully encoded in subtype Code128B"
+            )
+        )
+        subtype == :code128c && !isdigit(codeunit(data, i)) && throw(
+            ArgumentError(
+                "The given ascii `code` contains characters which are not digits " *
+                "and cannot be fully encoded in subtype Code128C"
+            )
+        )
+    end
+
+    subtype == :code128c && isodd(length(data)) && throw(
+        ArgumentError(
+            "The given ascii `code` contains an odd number of digits and cannot " *
+            "be fully enconded in subtype Code128C"
+        )
+    )
+
+    if subtype == :code128a || subtype == :code128b
+        encoding = [
+            "START $(uppercase(string(subtype)[end]))"
+            string.(collect(data))
+            "CHECKSUM"
+            "STOP"
+        ]
+    else
+        encoding = [
+            "START C"
+            [data[j:j+1] for j = 1:2:length(data)]
+            "CHECKSUM"
+            "STOP"
+        ]
+    end
+    return encoding
+end
+
 function get_encoding(data::AbstractString, ::Val{:code128}, mode::Symbol = :auto)
     data = ascii(data) # converts to String - throws error if not all characters are ascii
     encoding = String[]
@@ -57,10 +131,87 @@ end
 
 Redirect dispatch according to the given symbol `encoding_type`.
 """
-get_encoding(data, encoding_type::Symbol, args...) =
-    get_encoding(data, Val(encoding_type), args...)
+#= get_encoding(data, encoding_type::Symbol, args...) =
+    get_encoding(data, Val(encoding_type), args...) =#
 
-function get_encoding_mixed(data, ::Val{:code128})
+function _get_encoding_code128a(data::AbstractString)
+    @inbounds for i = 1:ncodeunits(data)
+        codeunit(data, i) ≥ 127 && throw(
+            ArgumentError(
+                "The given `data` is not fully ASCII and cannot be encoded in Code128A"
+            ),
+        )
+        codeunit(data, i) ≥ 96 && throw(
+            ArgumentError(
+                "The given ascii `data` contains lowercase letters or characters outside " *
+                "the range 0 - 95 and cannot be encoded in subtype Code128A"
+            )
+        )
+    end
+    
+    encoding = [
+        "START A"
+        string.(collect(data))
+        "CHECKSUM"
+        "STOP"
+    ]
+    return encoding
+end
+
+function _get_encoding_code128b(data::AbstractString)
+    @inbounds for i = 1:ncodeunits(data)
+        codeunit(data, i) ≥ 127 && throw(
+            ArgumentError(
+                "The given `data` is not fully ASCII and cannot be encoded in Code128A"
+            )
+        )
+        codeunit(data, i) ≤ 31 && throw(
+            ArgumentError(
+                "The given ascii `data` contains symbology characters outside the range " *
+                "32 - 127 and cannot be fully encoded in subtype Code128B"
+            )
+        )
+    end
+
+    encoding = [
+        "START B"
+        string.(collect(data))
+        "CHECKSUM"
+        "STOP"
+    ]
+    return encoding
+end
+
+function _get_encoding_code128c(data::AbstractString)
+    @inbounds for i = 1:ncodeunits(data)
+        codeunit(data, i) ≥ 127 && throw(
+            ArgumentError(
+                "The given `data` is not fully ASCII and cannot be encoded in Code128A"
+            )
+        )
+        codeunit(data, i) ≤ 31 && throw(
+            ArgumentError(
+                "The given ascii `data` contains symbology characters outside the range " *
+                "32 - 127 and cannot be fully encoded in subtype Code128B"
+            )
+        )
+    end
+
+    encoding = [
+        "START C"
+        [data[j:j+1] for j = 1:2:length(data)]
+        "CHECKSUM"
+        "STOP"
+    ]
+    return encoding
+end
+
+function _get_encoding_code128(data)
+    isascii(data) || throw(
+        ArgumentError(
+            "The given `data` is not fully ASCII and cannot be encoded in Code128A"
+        )
+    )
     encoding = String[]
 
     len_data = length(data)
@@ -129,4 +280,22 @@ function get_encoding_mixed(data, ::Val{:code128})
     end
     append!(encoding, ["CHECKSUM", "STOP"])
     return encoding
+end
+
+function get_encoding(data::AbstractString, encoding_type::Symbol)
+    if encoding_type == :code128
+        return _get_encoding_code128(data)
+    elseif encoding_type == :code128a
+        return _get_encoding_code128a(data)
+    elseif encoding_type == :code128b
+        return _get_encoding_code128b(data)
+    elseif encoding_type == :code128c
+        return _get_encoding_code128c(data)
+    else
+        throw(
+            ArgumentError(
+                "Encoding type `$(Meta.quot(mode))` not implemented"
+            )
+        )
+    end
 end
