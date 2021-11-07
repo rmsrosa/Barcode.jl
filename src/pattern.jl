@@ -1,45 +1,5 @@
 # Get pattern
 
-"""
-    get_pattern(encoding::Vector{<:AbstractString}, ::Val{:code128})
-
-Return the binary pattern for a given vector of code128 symbols.
-
-Currently, the `encoding` must start with either `START A`, `START B`, or `START C`
-and must end with `STOP`.
-
-The checksum must either be already computed or one can add an element `CHECKSUM`
-for the check sum to be computed and included at the same index where this directive
-appears.
-
-# Example
-
-```jldoctest
-julia> binary_pattern = get_pattern(["START C", "00", "01", "32", "CHECKSUM", "STOP"], Val(:code128))
-9-element Vector{String}:
- "00000000000"
- "11010011100"
- "11011001100"
- "11001101100"
- "11000110110"
- "10111101110"
- "11000111010"
- "11"
- "00000000000"
-
-julia> binary_pattern = get_pattern(["START A", "A", "B", "C", "CHECKSUM", "STOP"], Val(:code128))
-9-element Vector{String}:
- "00000000000"
- "11010000100"
- "10100011000"
- "10001011000"
- "10001000110"
- "11011001100"
- "11000111010"
- "11"
- "00000000000"
-```
-"""
 function _get_pattern_code128(encoding::Vector{<:AbstractString})
 
     m = match(r"^START (A|B|C)$", first(encoding))
@@ -112,6 +72,61 @@ function _get_pattern_code128(encoding::Vector{<:AbstractString})
     return binary_pattern
 end
 
+"""
+    get_pattern(encoding::Vector{<:AbstractString}, encoding_type::Symbol)
+
+Return the binary pattern for a given vector, following the specifications determined
+    by the `encoding_type`.
+
+Currently, only Code128 specification is available.
+
+If `encoding_type` is either `:code128a`, `:code128b`, or `:code128c`, it returns the
+encoding following the corresponding subtype. If `encoding_type` is `:code128`, it will
+return an optimized encoding, possibily mixing different subtypes. This strategy
+follows the specifications in "GS1 General Specifications, Version 13, Issue 1, Jan-2013,
+Section 5.4.7.7. Use of Start, Code Set, and Shift symbols to Minimize Symbol Length
+(Informative), pages 268 to 269."
+
+In this case of a Vector argument, it is assumed that `encoding` starts with either
+`START A`, `START B`, or `START C` and that it ends with `STOP`.
+
+The checksum must either be already computed or one can add an element `CHECKSUM`
+for the check sum to be computed and included where this directive appears.
+
+# Examples
+
+```jldoctest
+julia> binary_pattern = get_pattern(
+       ["START C", "00", "01", "32", "CHECKSUM", "STOP"],
+       :code128
+       )
+9-element Vector{String}:
+ "00000000000"
+ "11010011100"
+ "11011001100"
+ "11001101100"
+ "11000110110"
+ "10111101110"
+ "11000111010"
+ "11"
+ "00000000000"
+
+julia> binary_pattern = get_pattern(
+    ["START A", "A", "B", "C", "CHECKSUM", "STOP"],
+    :code128
+    )
+9-element Vector{String}:
+ "00000000000"
+ "11010000100"
+ "10100011000"
+ "10001011000"
+ "10001000110"
+ "11011001100"
+ "11000111010"
+ "11"
+ "00000000000"
+```
+"""
 function get_pattern(encoding::Vector{<:AbstractString}, encoding_type::Symbol)
     if encoding_type in (:code128, :code128a, :code128b, :code128c)
         pattern = _get_pattern_code128(encoding)
@@ -126,9 +141,9 @@ function get_pattern(encoding::Vector{<:AbstractString}, encoding_type::Symbol)
 end
 
 """
-    get_pattern(code::AbstractString, ::Val{:code128}, mode::Symbol = :auto)
+    get_pattern(data::AbstractString, encoding_type::Symbol)
 
-Retrieve the bar pattern for the given `code`, according to the encoding Code128.
+Retrieve the binary pattern for the given `data`, according to the encoding Code128.
 
 If `mode` is set to either `:code128a`, `:code128b`, or `:code128c`, it returns the encoding
 following the corresponding subtype. It throws an `ArgumentError` if the given `code` is not
@@ -142,7 +157,7 @@ The encoding is returned as a vector of string patterns, with each element corre
 to the encoding of each symbol in `code`, and appended with the proper quiet zones and the
 `START`, `STOP`, checksum, and ending bar patterns.
 """
-function get_pattern(code::AbstractString, encoding_type::Symbol)
-    encoding = get_encoding(code, encoding_type)
+function get_pattern(data::AbstractString, encoding_type::Symbol)
+    encoding = get_encoding(data, encoding_type)
     return get_pattern(encoding, encoding_type)
 end

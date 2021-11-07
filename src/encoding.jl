@@ -1,139 +1,6 @@
 # Get encoding
 
-val_symb(::Val{symb}) where symb = symb
-
-"""
-    get_encoding(data::AbstractString, ::Val{code128}; mode::Symbol)
-
-Return the encoded sequence from the given `data`, following the code128 specifications.
-
-If `mode` is either `:code128a`, `:code128b`, or `:code128c`, it returns the encoding
-following the corresponding subtype.
-
-The `data` needs to be a string of ascii characteres to be encoded, otherwise the method
-throws an `ArgumentError`.
-
-If `mode` is not given or if it is set to `:auto`, which is the default, the method attempts
-to use either of these subtypes or a combination of them. It throws an `ErrorException` if a
-proper way is not found. Please, report an issue if this happens.
-"""
-function get_encoding(data::AbstractString, ::Val{:code128a})
-    isascii(data) || throw(
-        ArgumentError(
-            "The given `data` is not fully ASCII and cannot be encoded in Code128"
-        ),
-    )
-    @inbounds for i = 1:ncodeunits(s)
-        codeunit(s, i) ≥ 96 && throw(
-            ArgumentError(
-                "The given ascii `data` contains lowercase letters or characters outside "
-                * "the range 0 - 95 used in code128a"
-            )
-        )
-    end
-    return get_encoding(data, :code128)
-end
-
-function get_encoding(
-        data::AbstractString, # ::Val{subtype}) where {subtype}
-        subtype::Union{Val{:code128a}, Val{:code128b}, Val{:code128c}}
-)
-    isascii(data) || throw(
-        ArgumentError(
-            "The given `data` is not fully ASCII and cannot be encoded in Code128"
-        ),
-    )
-    @inbounds for i = 1:ncodeunits(data)
-        subtype == :code128a && codeunit(data, i) ≥ 96 && throw(
-            ArgumentError(
-                "The given ascii `data` contains lowercase letters or characters outside " *
-                "the range 0 - 95 and cannot be encoded in subtype Code128A"
-            )
-        )
-        subtype == :code128b && codeunit(data, i) ≤ 31 && throw(
-            ArgumentError(
-                "The given ascii `data` contains symbology characters outside the range " *
-                "32 - 127 and cannot be fully encoded in subtype Code128B"
-            )
-        )
-        subtype == :code128c && !isdigit(codeunit(data, i)) && throw(
-            ArgumentError(
-                "The given ascii `code` contains characters which are not digits " *
-                "and cannot be fully encoded in subtype Code128C"
-            )
-        )
-    end
-
-    subtype == :code128c && isodd(length(data)) && throw(
-        ArgumentError(
-            "The given ascii `code` contains an odd number of digits and cannot " *
-            "be fully enconded in subtype Code128C"
-        )
-    )
-
-    if subtype == :code128a || subtype == :code128b
-        encoding = [
-            "START $(uppercase(string(subtype)[end]))"
-            string.(collect(data))
-            "CHECKSUM"
-            "STOP"
-        ]
-    else
-        encoding = [
-            "START C"
-            [data[j:j+1] for j = 1:2:length(data)]
-            "CHECKSUM"
-            "STOP"
-        ]
-    end
-    return encoding
-end
-
-function get_encoding(data::AbstractString, ::Val{:code128}, mode::Symbol = :auto)
-    data = ascii(data) # converts to String - throws error if not all characters are ascii
-    encoding = String[]
-
-    if mode in (:code128a, :code128b)
-        all(x -> string(x) in CODE128[:, mode], data) || throw(
-            ArgumentError(
-                "The given `code` cannot be encoded in subtype $(titlecase(string(mode)))",
-            ),
-        )
-        push!(encoding, "START $(uppercase(string(mode)[end]))")
-        append!(encoding, string.(collect(data)))
-        push!(encoding, "CHECKSUM")
-        push!(encoding, "STOP")
-    elseif mode == :code128c
-        (all(isdigit, data) && iseven(length(data))) ||
-            throw(ArgumentError("The given `code` cannot be encoded in subtype Code128A"))
-        push!(encoding, "START C")
-        append!(encoding, [data[j:j+1] for j = 1:2:length(data)])
-        push!(encoding, "CHECKSUM")
-        push!(encoding, "STOP")
-    elseif mode == :auto
-        if all(isdigit, data) && iseven(length(data))
-            encoding = get_encoding(data, Val(:code128), :code128c)
-        elseif all(x -> string(x) in CODE128.code128a, data)
-            encoding = get_encoding(data, Val(:code128), :code128a)
-        elseif all(x -> string(x) in CODE128.code128b, data)
-            encoding = get_encoding(data, Val(:code128), :code128b)
-        else
-            encoding = get_encoding_mixed(data, Val(:code128))
-        end
-    else
-        throw(ArgumentError("mode `$(Meta.quot(mode))` not implemented"))
-    end
-    return encoding
-end
-
-"""
-    get_encoding(code, encoding_type::Symbol, args...)
-
-Redirect dispatch according to the given symbol `encoding_type`.
-"""
-#= get_encoding(data, encoding_type::Symbol, args...) =
-    get_encoding(data, Val(encoding_type), args...) =#
-
+# Code128 encoding with subtype Code128A
 function _get_encoding_code128a(data::AbstractString)
     @inbounds for i = 1:ncodeunits(data)
         codeunit(data, i) ≥ 127 && throw(
@@ -158,6 +25,7 @@ function _get_encoding_code128a(data::AbstractString)
     return encoding
 end
 
+# Code128 encoding with subtype Code128B
 function _get_encoding_code128b(data::AbstractString)
     @inbounds for i = 1:ncodeunits(data)
         codeunit(data, i) ≥ 127 && throw(
@@ -182,6 +50,7 @@ function _get_encoding_code128b(data::AbstractString)
     return encoding
 end
 
+# Code128 encoding with subtype Code128C
 function _get_encoding_code128c(data::AbstractString)
     @inbounds for i = 1:ncodeunits(data)
         codeunit(data, i) ≥ 127 && throw(
@@ -206,6 +75,10 @@ function _get_encoding_code128c(data::AbstractString)
     return encoding
 end
 
+# Optimized Code128 (actually GS1-128) mixed-subtype encoding following the rules in 
+# "GS1 General Specifications, Version 13, Issue 1, Jan-2013, Section 5.4.7.7.
+# Use of Start, Code Set, and Shift symbols to Minimize Symbol Length (Informative),
+# pages 268 to 269."
 function _get_encoding_code128(data)
     isascii(data) || throw(
         ArgumentError(
@@ -282,6 +155,58 @@ function _get_encoding_code128(data)
     return encoding
 end
 
+"""
+    get_encoding(data::AbstractString, encoding_type::Symbol)
+
+Return the encoded sequence from the given `data`, following the specifications determined
+by the `encoding_type`.
+
+Currently, only Code128 specification is available.
+
+If `encoding_type` is either `:code128a`, `:code128b`, or `:code128c`, it returns the
+encoding following the corresponding subtype. If `encoding_type` is `:code128`, it will
+return an optimized encoding, possibily mixing different subtypes. This strategy
+follows the specifications in "GS1 General Specifications, Version 13, Issue 1, Jan-2013,
+Section 5.4.7.7. Use of Start, Code Set, and Shift symbols to Minimize Symbol Length
+(Informative), pages 268 to 269."
+
+The `data` needs to be a string of ascii characteres to be encoded, otherwise the method
+throws an `ArgumentError`.
+
+# Examples
+
+```jldoctest
+julia> encoding = get_encoding("000132", :code128c)
+6-element Vector{String}:
+ "START C"
+ "00"
+ "01"
+ "32"
+ "CHECKSUM"
+ "STOP"
+
+ julia> encoding = get_encoding("ABC", :code128a)
+ 6-element Vector{String}:
+  "START A"
+  "A"
+  "B"
+  "C"
+  "CHECKSUM"
+  "STOP"
+
+julia> encoding = get_encoding("AaBC\x02", :code128)
+9-element Vector{String}:
+ "START B"
+ "A"
+ "a"
+ "B"
+ "C"
+ "CODE A"
+ "\x02"
+ "CHECKSUM"
+ "STOP"
+```
+"""
 function get_encoding(data::AbstractString, encoding_type::Symbol)
     if encoding_type == :code128
         return _get_encoding_code128(data)
