@@ -11,7 +11,41 @@ const CODE128 = DataFrame(
     value = 0:106,
     code128a = [
         string.(Char(32):Char(95)) # ' ' to '_'
-        string.(Char(0):Char(31)) # NUL to US
+        # string.(Char(0):Char(31)) # NUL to US
+        [
+            "NUL" # Null - Char(0) = \x00
+            "SOH" # Start of Header
+            "STX" # Start of Text
+            "ETX" # End of Text
+            "EOT" # End of Transmission
+            "ENQ" # Enquiry
+            "ACK" # Acknowledge
+            "BEL" # Bell
+            "BS" # Backspace
+            "HT" # Horizontal Tab
+            "LF" # Line Feed
+            "VT" # Vertical Tab
+            "FF" # Form Feed
+            "CR" # Carriage Return
+            "SO" # Shift Out
+            "SI" # Shift In
+            "DLE" # Data Link Escape
+            "DC1" # Device Control 1
+            "DC2" # Device Control 2
+            "DC3" # Device Control 3
+            "DC4" # Device Control 4
+            "NAK" # Negative Acknowledge
+            "SYN" # Synchronize
+            "ETB" # End of Transmission Block
+            "CAN" # Cancel
+            "EM" # End of Medium
+            "SUB" # Substitute
+            "ESC" # Escape
+            "FS" # File Separator
+            "GS" # Group Separator
+            "RS" #	Record Separator
+            "US" #	Unit Separator - Char(31)
+        ] # Char(0):Char(31)
         [
             "FNC 3"
             "FNC 2"
