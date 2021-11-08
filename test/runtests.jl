@@ -13,13 +13,13 @@ using FileIO
                 "STOP",
             ]
         end
-        let encoding = Barcode.get_encoding("\x01A\x02", :code128a)
+        let encoding = Barcode.get_encoding("\x02A\x03", :code128a)
             @test length(encoding) == 6
             @test encoding == [
                 "START A",
-                "\x01",
+                "STX",
                 "A",
-                "\x02",
+                "ETX",
                 "CHECKSUM",
                 "STOP",
             ]
@@ -96,15 +96,15 @@ using FileIO
     end
 
     @testset "Code128 mixed subtypes" begin
-        let encoding = Barcode.get_encoding("\x01Aa\x09A0902a93892\x02000a\x03z", :code128)
+        let encoding = Barcode.get_encoding("\x02Aa\tA0902a93892\x03000a\x04z", :code128)
             @test length(encoding) == 28
             @test encoding == [
                 "START A",
-                "\x01",
+                "STX",
                 "A",
                 "SHIFT B",
                 "a",
-                "\t",
+                "HT",
                 "A",
                 "CODE C",
                 "09",
@@ -116,14 +116,14 @@ using FileIO
                 "38",
                 "92",
                 "CODE A",
-                "\x02",
+                "ETX",
                 "0",
                 "CODE C",
                 "00",
                 "CODE B",
                 "a",
                 "SHIFT A",
-                "\x03",
+                "EOT",
                 "z",
                 "CHECKSUM",
                 "STOP",
@@ -224,7 +224,7 @@ end
                 "10100011000", # A
                 "10000110100", # \t = Horizontal Tab
                 "10001011000", # B
-                "10011010000", # \x07 = Bell
+                "10011010000", # \x07 = BEL = Bell
                 "10000101100", # \x03 = ETX = End of Text
                 "10001100100", # CHECKSUM
                 "11000111010", # STOP
