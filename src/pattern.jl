@@ -16,7 +16,11 @@ function _barcode_pattern_code128(encoding::Vector{<:AbstractString})
         throw(ArgumentError("""There should be only one "STOP" in the encoding sequence"""))
 
     count(match.(r"^START [A|B|C]$", encoding) .!== nothing) == 1 ||
-        throw("""There should be only one r"START [A|B|C]" in the encoding sequence""")
+        throw(
+            ArgumentError(
+                "There should be only one r\"START [A|B|C]\" in the encoding sequence"
+            )
+        )
 
     subtype = Symbol("code128$(lowercase(m.captures[1]))")
     nextsubtype = subtype
@@ -161,4 +165,121 @@ function barcode_pattern(msg::AbstractString, encoding_type::Symbol)
     encoding = encode(msg, encoding_type)
     return barcode_pattern(encoding, encoding_type)
 end
+
+function _barcode_depattern_code128(pattern::AbstractString)
+
+    all(d -> d in ('0', '1'), pattern) || throw(
+        ArgumentError(
+            "A barcode pattern should be made of 0's and 1's only"
+        )
+    )
+
+    firstbar = findfirst(==('1'), pattern)
+    lastbar = findlast(==('1'), pattern)
+    lastbar - firstbar ≥ 34 || throw(
+        ArgumentoError(
+            "Barcode pattern is too short to be a Code128 barcode pattern"
+        )
+    )
+    pattern[lastbar-1:lastbar] == "11" || throw(
+        ArgumentError(
+            "Barcode pattern does not end properly with a double bar"
+        )
+    )
+    rem(lastbar - firstbar - 1, 11) == 0 || throw(
+        ArgumentError(
+            "Barcode pattern contents should have a length multiple of 11"
+        )
+    )
     
+    patterns = [pattern[i:i+10] for i in firstbar:11:lastbar-2]
+
+    first(patterns) in CODE128[104:106, :pattern] || throw(
+        ArgumentError(
+            "Barcode pattern should start with a pattern for either `START A`, " *
+            "`START B`, or `START C`" 
+        )
+    )
+
+    last(patterns) == CODE128[107, :pattern] || throw(
+        ArgumentError(
+            "Barcode pattern should end with the pattern for `STOP`"
+        )
+    )
+
+    count(patterns .== CODE128[107, :pattern]) == 1 ||
+        throw(ArgumentError("There should be only one pattern for \"STOP\""))
+
+    count([p in CODE128[104:106, :pattern] for p in patterns]) == 1 ||
+        throw(ArgumentError("There should be only one pattern for r\"START [A|B|C]\""))
+
+    # initialize code with the subtype START code
+    code = CODE128.code128a[CODE128[:, :pattern] .== first(patterns)]
+    nextsubtype = subtype = Symbol("code128$(lowercase(first(code)[end]))")
+
+    nrow = findfirst(==(first(code)), CODE128[:, subtype])
+    chk_sum = CODE128.value[nrow]
+    multiplier = 0
+
+    for p in patterns[2:end-2] # skip START [A|B|C] and stops before CHECKSUM and STOP
+
+        multiplier += 1
+
+        nrow = findfirst(==(p), CODE128[:, :pattern])
+        nrow === nothing && throw(
+            ArgumentError(
+                "$p is not a valid CODE128 pattern",
+            ),
+        )
+        push!(code, CODE128[nrow, nextsubtype])
+        chk_sum += multiplier * CODE128.value[nrow]
+
+        nextsubtype = subtype
+
+        p == CODE128.pattern[99] && (
+            (subtype == :code128a && (nextsubtype = :code128b)) ||
+            (subtype == :code128b && (nextsubtype = :code128a))
+        )
+        p == CODE128.pattern[100] && subtype in (:code128a, :code128b) &&
+            (subtype = nextsubtype = :code128c)
+        p == CODE128.pattern[101] && subtype in (:code128a, :code128c) &&
+            (subtype = nextsubtype = :code128b)
+        p == CODE128.pattern[102] && subtype in (:code128b, :code128c) &&
+            (subtype = nextsubtype = :code128a)
+    end
+
+    push!(code, "CHECKSUM")
+    push!(code, "STOP")
+
+    return code
+end
+
+function barcode_depattern(pattern::AbstractString, encoding_type::Symbol)
+    encoding_type == :code128 || throw(
+        ArgumentError(
+            "Decoding type `$(Meta.quot(mode))` not implemented"
+        )
+    )
+    encoding_type == :code128 && (code = _barcode_depattern_code128(pattern))
+
+    return code
+end
+
+barcode_depattern(pattern::Vector{<:AbstractString}, encoding_type::Symbol) =
+    barcode_depattern(prod(pattern), encoding_type)
+    
+function barcode_decode(pattern::AbstractString, encoding_type::Symbol)
+    encoding_type == :code128 || throw(
+        ArgumentError(
+            "Decoding type `$(Meta.quot(mode))` not implemented"
+        )
+    )
+    encoding_type == :code128 && (code = _barcode_depattern_code128(pattern))
+    
+    msg = decode(code, encoding_type)
+
+    return msg
+end
+
+barcode_decode(pattern::Vector{<:AbstractString}, encoding_type::Symbol) =
+    barcode_decode(prod(pattern), encoding_type)
