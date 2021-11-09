@@ -337,8 +337,6 @@ julia> code = encode("\x02Abc\x03", :code128)
  "ETX"
  "CHECKSUM"
  "STOP"
-
-
 """
 function decode(code::Vector{String}, encoding_type::Symbol)
     if encoding_type in (:code128, :code128a, :code128b, :code128c)
