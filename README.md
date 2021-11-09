@@ -2,19 +2,28 @@
 
 A [Code128](https://en.wikipedia.org/wiki/Code_128) barcode generator (see also [The 128 code](http://grandzebu.net/informatique/codbar-en/code128.htm) and [How Barcodes Work](https://courses.cs.washington.edu/courses/cse370/01au/minirproject/BarcodeBattlers/barcodes.html)).
 
-This package is under development.
+This package is under development and is not yet registered.
 
 Currently, only code128 is being implemented, but other barcodes might be implemented in the future. Contributions are welcome!
 
 ## Examples
 
-The main encoding methods are `encode(msg::AbstractString, encoding_type::Symbol)`, which yields a Code128 symbolic encoding for the given `msg`, `barcode_pattern(code::Vector{<:AbstractString}, encoding_type::Symbol)`, which yields the bar pattern for the given `code`, and `barcode_pattern(msg::AbstractString, encoding_type::Symbol)`, which yields the bar pattern directly from the `msg`(which simply calls the previous two methods).
+The main encoding methods are 
 
-Currently, only Code128 is implemented, for which one should set `encoding_type` to `:code128`, or one of its subtypes `:code128a`, `:code128b`, or `:code128c`.
+* `encode(msg::AbstractString, encoding_type::Symbol)`: yields a symbolic encoding for the given `msg`, in the form of a `Vector{String}`, according to the given `encoding_type`;
+* `barcode_pattern(code::Vector{<:AbstractString}, encoding_type::Symbol)`: yields the barcode pattern for the given `code` (usually obtained from `encode()`), in the form of a `String` with 0's and 1's representing a space or a bar, according to the given `encoding_type`;
+* `barcode_pattern(msg::AbstractString, encoding_type::Symbol)`: yields the codebar pattern directly from the `msg` (this simply calls the previous two methods), according to the given `encoding_type`.
+* `barcode_img(pattern::String; img_height = 50)`: yields a `Gray` type barcode image associated with the given pattern.
 
-If `:code128` is given, the method attempts to infer whether `code` can be encoded using `code128c` (only digits, with even length), `code128a`, or `code128b` subtypes, or it will then look for an optimized mixed-subtype encoding.
+The main decoding methods are
+* `decode(code::Vector{String}, encoding_type::Symbol)`: yields the message encoded in `code`, according to the given `encoding_type`;
+* `barcode_depattern(pattern::AbstractString, encoding_type::Symbol)`: yields the `code` associated with the given barcode pattern `pattern`, according to the given `encoding_type`;
+* `barcode_decode(pattern::AbstractString, encoding_type::Symbol)`: yields the message encoded in the given barcode pattern `pattern`, according to the given `encoding_type`.
 
-The pattern is a Vector of Strings with 0's and 1's, representing the bar code chunk for each code128 symbol in the barcode, where `0` is a space and `1` is a bar. One can concatenate it to a single String if desired.
+
+Currently, only Code128 is implemented, for which one should set `encoding_type` to `:code128`. When encoding, it is also possible to set the `encoding_type` to either `:code128a`, `:code128b`, or `:code128c`, following the subtypes Code128A, Code128B or Code128C, respectively.
+
+If `:code128` is given, the method attempts to infer whether `code` can be encoded using `code128c` (only digits, with even length), `code128b`, or `code128a` subtypes, or it will then look for an optimized mixed-subtype encoding.
 
 Here is an example with a ZIP code:
 
@@ -45,10 +54,12 @@ julia> code = Barcode.encode(zip_code, :code128)
  "STOP"
 ```
 
-Once the `pattern` is obtained, one can create a Gray Image with `img = Barcode.barcode_img(pattern; img_height = 20)`. After that, you can save it with `FileIO`.
+Once the `pattern` is obtained, one can create a Gray Image with `barcode_img(pattern::String; img_height = 50)`. After that, you can save it with `FileIO`.
 
 ```julia
 julia> using FileIO
+
+julia> img = Barcode.barcode_img(pattern)
 
 julia> FileIO.save("img/zipcode_12345678.png", img)
 ```
@@ -56,6 +67,40 @@ julia> FileIO.save("img/zipcode_12345678.png", img)
 Here is the result of saving the zip code above to a PNG file with `Barcode.barcode_img("img/zipcode_12345678.png", pattern)`:
 
 ![Zip Code 12.345-678](img/zipcode_12345678.png)
+
+With [JuliaImages](https://juliaimages.org/stable/), one can resize the generated image as desired.
+
+One can also plot the barcode with `Plots`, using the utility function `Barcode.barcode_positions(pattern)`, which yields the locations (indices) of each solid bar and their width:
+
+```julia
+julia> x, w = Barcode.barcode_positions(pattern)([12, 15, 18, 23, 25, 29, 34, 38, 40, 45  …  56, 62, 64, 67, 71, 75, 78, 83, 87, 89], [2, 1, 3, 1, 2, 3, 1, 1, 2, 3  …  2, 1, 1, 1, 3, 2, 2, 3, 1, 2])
+
+julia> plot([x'; x' + w'], ones(2, length(x)), color = :black, fill = true, xlims = (0, length(pattern)),  ylims = (0, 1), border = :none, legend = nothing)
+```
+
+Here is the resulting image:
+
+![Zip Code 12.345-678 with Plots.jl](img/zipcode_plot.png)
+
+One can decode with
+
+```julia
+julia> code_back = Barcode.barcode_depattern(pattern, :code128)
+7-element Vector{String}:
+ "START C"
+ "12"
+ "34"
+ "56"
+ "78"
+ "CHECKSUM 47"
+ "STOP"
+
+julia> msg_back1 = Barcode.decode(code_back, :code128) # from the depatterned code
+"12345678"
+
+julia> msg_back2 = Barcode.barcode_decode(pattern, :code128) # directly from pattern
+"12345678"
+```
 
 Here is another example with mixed subtypes:
 
@@ -86,7 +131,9 @@ julia> FileIO.save("img/CSE370.png", img)
 
 There are still a few things to be done in regards to the generated images, and with the image formats to play along with other graphic tools.
 
-Encoding also needs to be able to handle using directive FNC4 to access iso-latin ISO/IEC 8859-1. (Currently, it is actualy GSM-128 encoding).
+Encoding in Code128 is not yet complete. It needs to be able to handle the directive FNC4 to access iso-latin ISO/IEC 8859-1 characters.
+
+It could also be improved to generate GSM-128 encoding.
 
 And there are plenty of other barcode formats that can be implemented.
 

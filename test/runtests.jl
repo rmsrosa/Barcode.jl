@@ -1,6 +1,8 @@
 using Barcode
 using Test
 using FileIO
+using Plots # it is in runtests.jl just to generate the image for README
+            # it will be removed from tests once Documentation is ready
 
 @testset "Encoding" begin
     @testset "Code128a" begin
@@ -289,16 +291,30 @@ end
 
 @testset "Images" begin
     @testset "save Images.jl" begin
-        let zip = "12.345-678"
-            zip = replace(zip, r"\s|\.|\-" => "")
-            pattern = Barcode.barcode_pattern(zip, :code128)
+        let zip_code = "12.345-678"
+            zip_code = replace(zip_code, r"\s|\.|\-" => "")
+            pattern = Barcode.barcode_pattern(zip_code, :code128)
             img = Barcode.barcode_img(pattern)
-            @test FileIO.save("../img/zipcode_$zip.png", img) === nothing
+            @test FileIO.save("../img/zipcode_$zip_code.png", img) === nothing
         end
 
         let pattern = Barcode.barcode_pattern("CSE370", :code128)
             img = Barcode.barcode_img(pattern)
             @test FileIO.save("../img/CSE370.png", img) === nothing
+        end
+    end
+
+    @testset "Plot barcode" begin
+        let zip_code = "12.345-678"
+            zip_code = replace(zip_code, r"\s|\.|\-" => "")
+            pattern = Barcode.barcode_pattern(zip_code, :code128)
+            x, w = Barcode.barcode_positions(pattern)
+            Plots.plot(
+                [x'; x' + w'], ones(2, length(x)), color = :black, fill = true,
+                xlims = (0, length(pattern)),  ylims = (0, 1), border = :none,
+                legend = nothing
+            )
+            @test Plots.savefig("../img/zipcode_plot.png") === nothing
         end
     end
 end
