@@ -91,9 +91,9 @@ end
 # Use of Start, Code Set, and Shift symbols to Minimize Symbol Length (Informative),
 # pages 268 to 269."
 function _encode_code128(msg)
-    maximum(codeunits(msg)) ≤ 0x7e || throw(
+    isascii(msg) || throw(
         ArgumentError(
-            "The given `msg` contains characters outside the range 0-126 and cannot " *
+            "The given `msg` contains non-ascii characters and cannot " *
             "be fully encoded in Code128"
         )
     )
@@ -169,7 +169,11 @@ function _encode_code128(msg)
             end
             ind += 1
         else
-            push!(code, string(msg[ind]))
+            if codeunit(msg, ind) == 0x7f
+                push!(code, "DEL")
+            else
+                push!(code, string(msg[ind]))
+            end
             ind += 1
         end
         nextsubtype = subtype
@@ -274,6 +278,8 @@ function _decode_code128(code::Vector{String})
         elseif nextsubtype == :code128b && !startswith(c, "CHECKSUM")
             if CODE128.value[CODE128.code128b .== c][1] ≤ 94
                 msg *= c
+            elseif c == CODE128.code128b[96]
+                msg *= "\x7f" # DEL
             end
         elseif nextsubtype == :code128c && all(isdigit, c)
             msg *= c
