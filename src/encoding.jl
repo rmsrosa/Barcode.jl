@@ -262,10 +262,10 @@ function _decode_code128(code::Vector{String})
     for c in code
         if nextsubtype == :code128a && !startswith(c, "CHECKSUM")
             val = CODE128.value[CODE128.code128a .== c][1]
-            if val ≤ 63
-                msg *= Char(val)
-            elseif val ≤ 95
-                msg *= Char(val - 65)
+            if val ≤ 0x3f # check if ≤ 63
+                msg *= Char(val + 0x20) # add 32
+            elseif val ≤ 0x5f # check if ≤ 95
+                msg *= Char(val - 0x40) # subtract 64
             end
         elseif startswith(c, r"^CODE [A|B|C]$")
             nextsubtype = subtype = Symbol("code128$(lowercase(c[end]))")
