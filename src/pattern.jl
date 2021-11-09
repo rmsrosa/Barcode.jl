@@ -21,14 +21,14 @@ function _barcode_pattern_code128(encoding::Vector{<:AbstractString})
     subtype = Symbol("code128$(lowercase(m.captures[1]))")
     nextsubtype = subtype
 
-    # initialize binary_pattern with the quiet zone, which is at least 10x, where x is
+    # initialize pattern with the quiet zone, which is at least 10x, where x is
     # the width of each module, assumed here to be one bit. We use 11x just to have the
     # same length as the other symbols (except the double bar termination symbol).
     quiet_zone = "0"^11
-    binary_pattern = [quiet_zone]
+    pattern = [quiet_zone]
 
     nrow = findfirst(==(first(encoding)), CODE128[:, subtype])
-    push!(binary_pattern, CODE128.pattern[nrow])
+    push!(pattern, CODE128.pattern[nrow])
     chk_sum = CODE128.value[nrow]
     multiplier = 0
 
@@ -37,7 +37,7 @@ function _barcode_pattern_code128(encoding::Vector{<:AbstractString})
         multiplier += 1
 
         if c == "CHECKSUM"
-            push!(binary_pattern, CODE128.pattern[rem(chk_sum, 103)+1])
+            push!(pattern, CODE128.pattern[rem(chk_sum, 103)+1])
             chk_sum += multiplier * chk_sum
         else
             nrow = findfirst(==(c), CODE128[:, nextsubtype])
@@ -46,7 +46,7 @@ function _barcode_pattern_code128(encoding::Vector{<:AbstractString})
                     "$c is not part of subtype $(titlecase(string(nextsubtype))) of Code128",
                 ),
             )
-            push!(binary_pattern, CODE128.pattern[nrow])
+            push!(pattern, CODE128.pattern[nrow])
             chk_sum += multiplier * CODE128.value[nrow]
 
             nextsubtype = subtype
@@ -64,12 +64,12 @@ function _barcode_pattern_code128(encoding::Vector{<:AbstractString})
         end
     end
     # "END" bars
-    push!(binary_pattern, "11")
+    push!(pattern, "11")
 
     # Quiet zone
-    push!(binary_pattern, quiet_zone)
+    push!(pattern, quiet_zone)
 
-    return binary_pattern
+    return pattern
 end
 
 """
@@ -96,7 +96,7 @@ for the check sum to be computed and included where this directive appears.
 # Examples
 
 ```jldoctest
-julia> binary_pattern = barcode_pattern(
+julia> pattern = barcode_pattern(
        ["START C", "00", "01", "32", "CHECKSUM", "STOP"],
        :code128
        )
@@ -111,7 +111,7 @@ julia> binary_pattern = barcode_pattern(
  "11"
  "00000000000"
 
-julia> binary_pattern = barcode_pattern(
+julia> pattern = barcode_pattern(
     ["START A", "A", "B", "C", "CHECKSUM", "STOP"],
     :code128
     )
@@ -161,3 +161,4 @@ function barcode_pattern(msg::AbstractString, encoding_type::Symbol)
     encoding = encode(msg, encoding_type)
     return barcode_pattern(encoding, encoding_type)
 end
+    
