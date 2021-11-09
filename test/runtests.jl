@@ -132,6 +132,20 @@ using FileIO
     end
 end
 
+@testset "Decoding" begin
+    for msg in (
+        "ABC",
+        "abc",
+        "0123",
+        "\x02ABC\x03",
+        "\x02ABcZ\x03",
+        "\x02AB012345\x03",
+        "A b!\t0012\nZ z@\t0013\nAz `\t9999\naA \x7f\t1357"
+    )
+        code = Barcode.encode(msg, :code128)
+        @test msg == Barcode.decode(code, :code128)
+    end
+end
 @testset "Patterns" begin
     
     @testset "code128 subtypes" begin
