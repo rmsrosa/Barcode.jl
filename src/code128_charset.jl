@@ -61,8 +61,8 @@ const CODE128 = DataFrame(
         ]
     ],
     code128b = [
-        string.(Char(32):Char(127)) # SPACE to DEL
-        ["FNC 3", "FNC 2", "SHIFT A", "CODE C", "FNC 4", "CODE A", "FNC 1"]
+        string.(Char(32):Char(126)) # SPACE to ~
+        ["DEL", "FNC 3", "FNC 2", "SHIFT A", "CODE C", "FNC 4", "CODE A", "FNC 1"]
         ["START A", "START B", "START C", "STOP"]
     ],
     code128c = [
