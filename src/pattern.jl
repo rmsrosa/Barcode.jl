@@ -166,8 +166,7 @@ function barcode_pattern(msg::AbstractString, encoding_type::Symbol)
     return barcode_pattern(encoding, encoding_type)
 end
 
-function _barcode_depattern_code128(pattern::AbstractString)
-
+function _split_pattern_code128(pattern::AbstractString)
     all(d -> d in ('0', '1'), pattern) || throw(
         ArgumentError(
             "A barcode pattern should be made of 0's and 1's only"
@@ -192,36 +191,43 @@ function _barcode_depattern_code128(pattern::AbstractString)
         )
     )
     
-    patterns = [pattern[i:i+10] for i in firstbar:11:lastbar-2]
+    splited_pattern = [pattern[i:i+10] for i in firstbar:11:lastbar-2]
 
-    first(patterns) in CODE128[104:106, :pattern] || throw(
+    first(splited_pattern) in CODE128[104:106, :pattern] || throw(
         ArgumentError(
             "Barcode pattern should start with a pattern for either `START A`, " *
             "`START B`, or `START C`" 
         )
     )
 
-    last(patterns) == CODE128[107, :pattern] || throw(
+    last(splited_pattern) == CODE128[107, :pattern] || throw(
         ArgumentError(
             "Barcode pattern should end with the pattern for `STOP`"
         )
     )
 
-    count(patterns .== CODE128[107, :pattern]) == 1 ||
+    count(splited_pattern .== CODE128[107, :pattern]) == 1 ||
         throw(ArgumentError("There should be only one pattern for \"STOP\""))
 
-    count([p in CODE128[104:106, :pattern] for p in patterns]) == 1 ||
+    count([p in CODE128[104:106, :pattern] for p in splited_pattern]) == 1 ||
         throw(ArgumentError("There should be only one pattern for r\"START [A|B|C]\""))
 
+    return splited_pattern
+end
+
+function _barcode_depattern_code128(pattern::AbstractString)
+
+    splited_pattern = _split_pattern_code128(pattern)
+
     # initialize code with the subtype START code
-    code = CODE128.code128a[CODE128[:, :pattern] .== first(patterns)]
+    code = CODE128.code128a[CODE128[:, :pattern] .== first(splited_pattern)]
     nextsubtype = subtype = Symbol("code128$(lowercase(first(code)[end]))")
 
     nrow = findfirst(==(first(code)), CODE128[:, subtype])
     chk_sum = CODE128.value[nrow]
     multiplier = 0
 
-    for p in patterns[2:end-2] # skip START [A|B|C] and stops before CHECKSUM and STOP
+    for p in splited_pattern[2:end-2] # skip START [A|B|C] and stop before CHECKSUM and STOP
 
         multiplier += 1
 
