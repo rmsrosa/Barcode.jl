@@ -21,33 +21,20 @@ Here is an example with a ZIP code:
 ```julia
 julia> using Barcode
 
-julia> zip = "12.345-678"
+julia> zip_code = "12.345-678"
 "12.345-678"
 
-julia> zip = replace(zip, r"\s|\.|\-" => "")
+julia> zip_code = replace(zip_code, r"\s|\.|\-" => "")
 "12345678"
 
-julia> pattern = Barcode.barcode_pattern(zip, :code128)
-10-element Vector{String}:
- "00000000000"
- "11010011100"
- "10110011100"
- "10001011000"
- "11100010110"
- "11000010100"
- "10001110110"
- "11000111010"
- "11"
- "00000000000"
-
-julia> prod(pattern)
+julia> pattern = Barcode.barcode_pattern(zip_code, :code128)
 "00000000000110100111001011001110010001011000111000101101100001010010001110110110001110101100000000000"
 ```
 
 One can see the code with `encode`:
 
 ```julia
-julia> code = Barcode.encode(zip, :code128)
+julia> code = Barcode.encode(zip_code, :code128)
 7-element Vector{String}:
  "START C"
  "12"
@@ -86,19 +73,7 @@ julia> code = encode("CSE370", :code128)
  "STOP"
 
 julia> pattern = Barcode.barcode_pattern(code, :code128)
-12-element Vector{String}:
- "00000000000"
- "11010010000"
- "10001000110"
- "11011101000"
- "10001101000"
- "11001011100"
- "10111011110"
- "10110000100"
- "10010001100"
- "11000111010"
- "11"
- "00000000000"
+"000000000001101001000010001000110110111010001000110100011001011100101110111101011000010010010001100110001110101100000000000"
 
 julia> img = Barcode.barcode_img(pattern)
 
