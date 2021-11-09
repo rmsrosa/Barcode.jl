@@ -8,14 +8,12 @@ the image reveals the barcode.
 You can save the generated image via `FileIO.save`, using any format accepted by `FileIO`.
 """
 function barcode_img(pattern; img_height = 50)
-    cbp = collect(prod(pattern))
-    # with a little help from @ScottPJones and @borodi
     img =
         Gray.(
             [
-                fill(true, 1, length(cbp))
-                repeat(reshape(map(==('0'), cbp), 1, :), img_height, 1)
-                fill(true, 1, length(cbp))
+                fill(true, 1, length(pattern))
+                repeat(reshape([c == ('0') for c in pattern], 1, :), img_height, 1)
+                fill(true, 1, length(pattern))
             ],
         )
     return img

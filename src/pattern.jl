@@ -1,21 +1,21 @@
 # Get pattern
 
-function _barcode_pattern_code128(encoding::Vector{<:AbstractString})
+function _barcode_pattern_code128(code::Vector{<:AbstractString})
 
-    m = match(r"^START (A|B|C)$", first(encoding))
+    m = match(r"^START (A|B|C)$", first(code))
     m !== nothing || throw(
         ArgumentError(
-            "First element of `encoding` should be either `START A`, `START B` or `START C`",
+            "First element of `code` should be either `START A`, `START B` or `START C`",
         ),
     )
 
-    last(encoding) == "STOP" ||
-        throw(ArgumentError("Last element of `encoding` should be `STOP`"))
+    last(code) == "STOP" ||
+        throw(ArgumentError("Last element of `code` should be `STOP`"))
 
-    count(encoding .== "STOP") == 1 ||
+    count(code .== "STOP") == 1 ||
         throw(ArgumentError("""There should be only one "STOP" in the encoding sequence"""))
 
-    count(match.(r"^START [A|B|C]$", encoding) .!== nothing) == 1 ||
+    count(match.(r"^START [A|B|C]$", code) .!== nothing) == 1 ||
         throw(
             ArgumentError(
                 "There should be only one r\"START [A|B|C]\" in the encoding sequence"
@@ -31,12 +31,12 @@ function _barcode_pattern_code128(encoding::Vector{<:AbstractString})
     quiet_zone = "0"^11
     pattern = [quiet_zone]
 
-    nrow = findfirst(==(first(encoding)), CODE128[:, subtype])
+    nrow = findfirst(==(first(code)), CODE128[:, subtype])
     push!(pattern, CODE128.pattern[nrow])
     chk_sum = CODE128.value[nrow]
     multiplier = 0
 
-    for c in encoding[2:end]
+    for c in code[2:end]
 
         multiplier += 1
 
@@ -59,7 +59,6 @@ function _barcode_pattern_code128(encoding::Vector{<:AbstractString})
                 subtype = nextsubtype = Symbol("code128$(lowercase(m.captures[1]))")
             end
 
-
             m = match(r"^SHIFT (A|B)$", c)
             if m !== nothing
                 nextsubtype = Symbol("code128$(lowercase(m.captures[1]))")
@@ -73,26 +72,27 @@ function _barcode_pattern_code128(encoding::Vector{<:AbstractString})
     # Quiet zone
     push!(pattern, quiet_zone)
 
+    pattern = prod(pattern)
     return pattern
 end
 
 """
-    barcode_pattern(encoding::Vector{<:AbstractString}, encoding_type::Symbol)
+    barcode_pattern(code::Vector{<:AbstractString}, encoding_type::Symbol)
 
-Return the binary pattern for a given vector, following the specifications determined
-    by the `encoding_type`.
+Return the binary pattern for a given vector of codes following the specifications
+determined by the `encoding_type`.
 
 Currently, only Code128 specification is available.
 
 If `encoding_type` is either `:code128a`, `:code128b`, or `:code128c`, it returns the
-encoding following the corresponding subtype. If `encoding_type` is `:code128`, it will
-return an optimized encoding, possibily mixing different subtypes. This strategy
-follows the specifications in "GS1 General Specifications, Version 13, Issue 1, Jan-2013,
+encoding following the corresponding subtype. If `encoding_type` is `:code128`, it returns
+an optimized encoding, possibily mixing different subtypes. This strategy follows
+the specifications in "GS1 General Specifications, Version 13, Issue 1, Jan-2013,
 Section 5.4.7.7. Use of Start, Code Set, and Shift symbols to Minimize Symbol Length
 (Informative), pages 268 to 269."
 
-In this case of a Vector argument, it is assumed that `encoding` starts with either
-`START A`, `START B`, or `START C` and that it ends with `STOP`.
+It is assumed that `code` starts with either `START A`, `START B`, or `START C` and that
+it ends with `STOP`.
 
 The checksum must either be already computed or one can add an element `CHECKSUM`
 for the check sum to be computed and included where this directive appears.
@@ -101,39 +101,21 @@ for the check sum to be computed and included where this directive appears.
 
 ```jldoctest
 julia> pattern = barcode_pattern(
-       ["START C", "00", "01", "32", "CHECKSUM", "STOP"],
-       :code128
+           ["START C", "00", "01", "32", "CHECKSUM", "STOP"],
+           :code128
        )
-9-element Vector{String}:
- "00000000000"
- "11010011100"
- "11011001100"
- "11001101100"
- "11000110110"
- "10111101110"
- "11000111010"
- "11"
- "00000000000"
+"000000000001101001110011011001100110011011001100011011010111101110110001110101100000000000"
 
 julia> pattern = barcode_pattern(
-    ["START A", "A", "B", "C", "CHECKSUM", "STOP"],
-    :code128
-    )
-9-element Vector{String}:
- "00000000000"
- "11010000100"
- "10100011000"
- "10001011000"
- "10001000110"
- "11011001100"
- "11000111010"
- "11"
- "00000000000"
+           ["START A", "A", "B", "C", "CHECKSUM", "STOP"],
+           :code128
+       )
+"000000000001101000010010100011000100010110001000100011011011001100110001110101100000000000"
 ```
 """
-function barcode_pattern(encoding::Vector{<:AbstractString}, encoding_type::Symbol)
+function barcode_pattern(code::Vector{<:AbstractString}, encoding_type::Symbol)
     if encoding_type in (:code128, :code128a, :code128b, :code128c)
-        pattern = _barcode_pattern_code128(encoding)
+        pattern = _barcode_pattern_code128(code)
     else
         throw(
             ArgumentError(
@@ -147,23 +129,22 @@ end
 """
     barcode_pattern(msg::AbstractString, encoding_type::Symbol)
 
-Retrieve the binary pattern for the given `msg`, according to the encoding Code128.
+Generate the barcode pattern for the given `msg`, according to the encoding Code128.
 
-If `mode` is set to either `:code128a`, `:code128b`, or `:code128c`, it returns the encoding
-following the corresponding subtype. It throws an `ArgumentError` if the given `msg` is not
-suitable for encoding with the given subtype.
+If `encoding_type` is set to either `:code128a`, `:code128b`, or `:code128c`, it returns
+the encoding following the corresponding subtype. It throws an `ArgumentError` if the given
+`msg` is not suitable for encoding with the given subtype.
 
-If `mode` is not given or if it is set to `:auto`, which is the default, then it attempts
-to use either of these subtypes or a combination of them. It throws an `ArgumentError` if
-not possible to do so.
+If `encoding_type` is set to `:code128`, it attempts to use either of these subtypes or
+a combination of them. It throws an `ArgumentError` if not possible to do so.
 
 The encoding is returned as a vector of string patterns, with each element corresponding
 to the encoding of each symbol in `code`, and appended with the proper quiet zones and the
 `START`, `STOP`, checksum, and ending bar patterns.
 """
 function barcode_pattern(msg::AbstractString, encoding_type::Symbol)
-    encoding = encode(msg, encoding_type)
-    return barcode_pattern(encoding, encoding_type)
+    code = encode(msg, encoding_type)
+    return barcode_pattern(code, encoding_type)
 end
 
 function _split_pattern_code128(pattern::AbstractString)
@@ -191,26 +172,33 @@ function _split_pattern_code128(pattern::AbstractString)
         )
     )
     
-    splited_pattern = [pattern[i:i+10] for i in firstbar:11:lastbar-2]
+    core_patterns = [pattern[i:i+10] for i in firstbar:11:lastbar-2]
 
-    first(splited_pattern) in CODE128[104:106, :pattern] || throw(
+    first(core_patterns) in CODE128[104:106, :pattern] || throw(
         ArgumentError(
             "Barcode pattern should start with a pattern for either `START A`, " *
             "`START B`, or `START C`" 
         )
     )
 
-    last(splited_pattern) == CODE128[107, :pattern] || throw(
+    last(core_patterns) == CODE128[107, :pattern] || throw(
         ArgumentError(
             "Barcode pattern should end with the pattern for `STOP`"
         )
     )
 
-    count(splited_pattern .== CODE128[107, :pattern]) == 1 ||
+    count(core_patterns .== CODE128[107, :pattern]) == 1 ||
         throw(ArgumentError("There should be only one pattern for \"STOP\""))
 
-    count([p in CODE128[104:106, :pattern] for p in splited_pattern]) == 1 ||
+    count([p in CODE128[104:106, :pattern] for p in core_patterns]) == 1 ||
         throw(ArgumentError("There should be only one pattern for r\"START [A|B|C]\""))
+
+    splited_pattern = [
+        pattern[begin:firstbar-1]
+        core_patterns
+        "11"
+        pattern[lastbar+1:end]
+    ]
 
     return splited_pattern
 end
@@ -220,14 +208,16 @@ function _barcode_depattern_code128(pattern::AbstractString)
     splited_pattern = _split_pattern_code128(pattern)
 
     # initialize code with the subtype START code
-    code = CODE128.code128a[CODE128[:, :pattern] .== first(splited_pattern)]
+    code = CODE128.code128a[CODE128[:, :pattern] .== splited_pattern[2]]
     nextsubtype = subtype = Symbol("code128$(lowercase(first(code)[end]))")
 
     nrow = findfirst(==(first(code)), CODE128[:, subtype])
     chk_sum = CODE128.value[nrow]
     multiplier = 0
 
-    for p in splited_pattern[2:end-2] # skip START [A|B|C] and stop before CHECKSUM and STOP
+    # skip quiet zone and START [A|B|C]
+    # stop before CHECKSUM, STOP, END, and last quiet zone
+    for p in splited_pattern[3:end-4]
 
         multiplier += 1
 
@@ -254,7 +244,10 @@ function _barcode_depattern_code128(pattern::AbstractString)
             (subtype = nextsubtype = :code128a)
     end
 
-    push!(code, "CHECKSUM")
+    chk_sum = chk_sum % 103
+    CODE128.value[CODE128.pattern .== splited_pattern[end-3]][1] == chk_sum ||
+        @warn "Barcode checksum does not match computed checksum"
+    push!(code, "CHECKSUM $chk_sum")
     push!(code, "STOP")
 
     return code
@@ -270,9 +263,6 @@ function barcode_depattern(pattern::AbstractString, encoding_type::Symbol)
 
     return code
 end
-
-barcode_depattern(pattern::Vector{<:AbstractString}, encoding_type::Symbol) =
-    barcode_depattern(prod(pattern), encoding_type)
     
 function barcode_decode(pattern::AbstractString, encoding_type::Symbol)
     encoding_type == :code128 || throw(
@@ -286,6 +276,3 @@ function barcode_decode(pattern::AbstractString, encoding_type::Symbol)
 
     return msg
 end
-
-barcode_decode(pattern::Vector{<:AbstractString}, encoding_type::Symbol) =
-    barcode_decode(prod(pattern), encoding_type)
