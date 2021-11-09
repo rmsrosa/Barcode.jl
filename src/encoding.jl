@@ -208,14 +208,14 @@ julia> code = encode("000132", :code128c)
  "CHECKSUM"
  "STOP"
 
- julia> code = encode("ABC", :code128a)
- 6-element Vector{String}:
-  "START A"
-  "A"
-  "B"
-  "C"
-  "CHECKSUM"
-  "STOP"
+julia> code = encode("ABC", :code128a)
+6-element Vector{String}:
+ "START A"
+ "A"
+ "B"
+ "C"
+ "CHECKSUM"
+ "STOP"
 
 julia> code = encode("AaBC\x02", :code128)
 9-element Vector{String}:
@@ -260,17 +260,17 @@ function _decode_code128(code::Vector{String})
     msg = ""
 
     for c in code
-        if nextsubtype == :code128a && !startswith(c, "CHECKSUM")
+        if startswith(c, r"^CODE [A|B|C]$")
+            nextsubtype = subtype = Symbol("code128$(lowercase(c[end]))")
+        elseif startswith(c, r"^SHIFT [A|B|C]$")
+            nextsubtype = Symbol("code128$(lowercase(c[end]))")
+        elseif nextsubtype == :code128a && !startswith(c, "CHECKSUM")
             val = CODE128.value[CODE128.code128a .== c][1]
             if val ≤ 0x3f # check if ≤ 63
                 msg *= Char(val + 0x20) # add 32
             elseif val ≤ 0x5f # check if ≤ 95
                 msg *= Char(val - 0x40) # subtract 64
             end
-        elseif startswith(c, r"^CODE [A|B|C]$")
-            nextsubtype = subtype = Symbol("code128$(lowercase(c[end]))")
-        elseif startswith(c, r"^SHIFT [A|B|C]$")
-            nextsubtype = Symbol("code128$(lowercase(c[end]))")
         elseif nextsubtype == :code128b && !startswith(c, "CHECKSUM")
             if CODE128.value[CODE128.code128b .== c][1] ≤ 94
                 msg *= c
@@ -282,8 +282,57 @@ function _decode_code128(code::Vector{String})
     return msg
 end
 
-
 """
+    decode(code::Vector{String}, encoding_type::Symbol)
+
+Decode the gived encoded sequence, following the specifications determined by the
+`encoding_type`.
+
+Currently, only Code128 specification is available.
+
+# Examples
+
+```jldoctest
+ulia> code = encode("000132", :code128)
+6-element Vector{String}:
+ "START C"
+ "00"
+ "01"
+ "32"
+ "CHECKSUM"
+ "STOP"
+
+julia> msg = decode(code, :code128)
+"000132"
+
+julia> code = encode("\x02ABC\x03", :code128)
+8-element Vector{String}:
+ "START A"
+ "STX"
+ "A"
+ "B"
+ "C"
+ "ETX"
+ "CHECKSUM"
+ "STOP"
+
+julia> msg = decode(code, :code128)
+"\x02ABC\x03"
+
+julia> code = encode("\x02Abc\x03", :code128)
+10-element Vector{String}:
+ "START A"
+ "STX"
+ "A"
+ "CODE B"
+ "b"
+ "c"
+ "CODE A"
+ "ETX"
+ "CHECKSUM"
+ "STOP"
+
+
 """
 function decode(code::Vector{String}, encoding_type::Symbol)
     if encoding_type in (:code128, :code128a, :code128b, :code128c)
