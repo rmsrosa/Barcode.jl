@@ -1,132 +1,132 @@
 # Encoding and decoding
 
 # Code128 encoding with subtype Code128A
-function _get_encoding_code128a(data::AbstractString)
-    @inbounds for i = 1:ncodeunits(data)
-        codeunit(data, i) ≥ 0x7f && throw(
+function _encode_code128a(msg::AbstractString)
+    @inbounds for i = 1:ncodeunits(msg)
+        codeunit(msg, i) ≥ 0x7f && throw(
             ArgumentError(
-                "The given `data` contains characters outside the range 0 - 126 and " * 
+                "The given `msg` contains characters outside the range 0 - 126 and " * 
                 "cannot be enncoded in Code128"
             ),
         )
-        codeunit(data, i) ≥ 0x60 && throw(
+        codeunit(msg, i) ≥ 0x60 && throw(
             ArgumentError(
-                "The given ascii `data` contains lowercase letters or characters outside " *
+                "The given ascii `msg` contains lowercase letters or characters outside " *
                 "the range 0 - 95 and cannot be encoded in subtype Code128A"
             )
         )
     end
     
-    encoding = ["START A"]
-    @inbounds for i = 1:ncodeunits(data)
-        if 0x20 ≤ codeunit(data, i) ≤ 0x5f
-            push!(encoding, string(data[i]))
-        elseif codeunit(data, i) ≤ 0x1f
-            push!(encoding, CODE128[codeunit(data, i) + 0x41, :code128a])
+    code = ["START A"]
+    @inbounds for i = 1:ncodeunits(msg)
+        if 0x20 ≤ codeunit(msg, i) ≤ 0x5f
+            push!(code, string(msg[i]))
+        elseif codeunit(msg, i) ≤ 0x1f
+            push!(code, CODE128[codeunit(msg, i) + 0x41, :code128a])
         else
             throw(
                 ArgumentError(
-                    "Char in position $i in `data` cannot be encoded in subtype Code128A"
+                    "Char in position $i in `msg` cannot be encoded in subtype Code128A"
                 )
             )
         end
     end
-    append!(encoding, ["CHECKSUM", "STOP"])
+    append!(code, ["CHECKSUM", "STOP"])
 
-    return encoding
+    return code
 end
 
 # Code128 encoding with subtype Code128B
-function _get_encoding_code128b(data::AbstractString)
-    @inbounds for i = 1:ncodeunits(data)
-        codeunit(data, i) ≥ 0x7f && throw(
+function _encode_code128b(msg::AbstractString)
+    @inbounds for i = 1:ncodeunits(msg)
+        codeunit(msg, i) ≥ 0x7f && throw(
             ArgumentError(
-                "The given `data` contains characters outside the range 0 - 126 and " * 
+                "The given `msg` contains characters outside the range 0 - 126 and " * 
                 "cannot be enncoded in Code128"
             )
         )
-        codeunit(data, i) ≤ 0x1f && throw(
+        codeunit(msg, i) ≤ 0x1f && throw(
             ArgumentError(
-                "The given ascii `data` contains symbology characters outside the range " *
+                "The given ascii `msg` contains symbology characters outside the range " *
                 "32 - 127 and cannot be fully encoded in subtype Code128B"
             )
         )
     end
 
-    encoding = [
+    code = [
         "START B"
-        string.(collect(data))
+        string.(collect(msg))
         "CHECKSUM"
         "STOP"
     ]
-    return encoding
+    return code
 end
 
 # Code128 encoding with subtype Code128C
-function _get_encoding_code128c(data::AbstractString)
-    all(isdigit, data) || throw(
+function _encode_code128c(msg::AbstractString)
+    all(isdigit, msg) || throw(
         ArgumentError(
-            "The given `data` contains characters which are not digits and cannot " *
+            "The given `msg` contains characters which are not digits and cannot " *
             "be encoded in subtype Code128C"
         )
     )
-    iseven(length(data)) || throw(
+    iseven(length(msg)) || throw(
         ArgumentError(
-            "The given `data` contains an odd number of digits and cannot be fully " *
+            "The given `msg` contains an odd number of digits and cannot be fully " *
             "encoded in subtype Code128C"
         )
     )
 
-    encoding = [
+    code = [
         "START C"
-        [data[j:j+1] for j = 1:2:length(data)]
+        [msg[j:j+1] for j = 1:2:length(msg)]
         "CHECKSUM"
         "STOP"
     ]
-    return encoding
+    return code
 end
 
 # Optimized Code128 (actually GS1-128) mixed-subtype encoding following the rules in 
 # "GS1 General Specifications, Version 13, Issue 1, Jan-2013, Section 5.4.7.7.
 # Use of Start, Code Set, and Shift symbols to Minimize Symbol Length (Informative),
 # pages 268 to 269."
-function _get_encoding_code128(data)
-    maximum(codeunits(data)) ≤ 0x7e || throw(
+function _encode_code128(msg)
+    maximum(codeunits(msg)) ≤ 0x7e || throw(
         ArgumentError(
-            "The given `data` contains characters outside the range 0-126 and cannot " *
+            "The given `msg` contains characters outside the range 0-126 and cannot " *
             "be fully encoded in Code128"
         )
     )
-    encoding = String[]
+    code = String[]
 
-    len_data = length(data)
-    are_digits = [isdigit(d) for d in data]
+    len_msg = length(msg)
+    are_digits = [isdigit(d) for d in msg]
 
     # Determine start character:
     if (length(are_digits) == 2 && are_digits == [1, 1]) || (
         length(are_digits) ≥ 4 && are_digits[1:4] == [1, 1, 1, 1]
     ) # Determine whether there are enough digits
         subtype = :code128c
-    elseif UInt8(first(data)) ≤ 0x1f # check whether it is a symbology element (NUL to US)
+    elseif UInt8(first(msg)) ≤ 0x1f # check whether it is a symbology element (NUL to US)
         subtype = :code128a
     else
         subtype = :code128b
     end
 
-    push!(encoding, "START $(uppercase(string(subtype)[end]))")
+    push!(code, "START $(uppercase(string(subtype)[end]))")
     ind = 1
     nextsubtype = subtype
 
-    while ind ≤ length(data)
+    while ind ≤ length(msg)
         # Determine whether it needs to change or shift subtype
-        if nextsubtype == :code128c && (len_data == ind || (len_data > ind && are_digits[ind:ind+1] != [1, 1]))
-            if codeunit(data, ind) ≤ 0x1f ||
-                    (codeunit(data, ind) ≤ 0x5f && len_data > ind &&
-                        0 ≤ codeunit(data, ind+1) ≤ 0x1f)
-                push!(encoding, "CODE A")
+        if nextsubtype == :code128c && (len_msg == ind || (len_msg > ind && are_digits[ind:ind+1] != [1, 1]))
+            if codeunit(msg, ind) ≤ 0x1f ||
+                    (codeunit(msg, ind) ≤ 0x5f && len_msg > ind &&
+                        0 ≤ codeunit(msg, ind+1) ≤ 0x1f)
+                push!(code, "CODE A")
                 nextsubtype = subtype = :code128a
             else
-                push!(encoding, "CODE B")
+                push!(code, "CODE B")
                 nextsubtype = subtype = :code128b
             end             
         elseif nextsubtype != :code128c && are_digits[ind] && 
@@ -134,54 +134,54 @@ function _get_encoding_code128(data)
                     (findnext(iszero, are_digits, ind) !== nothing &&
                         iseven(findnext(iszero, are_digits, ind) - ind)) ||
                     (findnext(iszero, are_digits, ind) === nothing &&
-                        len_data > ind && isodd(len_data - ind))
+                        len_msg > ind && isodd(len_msg - ind))
                 )
-            push!(encoding, "CODE C")
+            push!(code, "CODE C")
             nextsubtype = subtype = :code128c
-        elseif nextsubtype != :code128a && codeunit(data, ind) ≤ 0x1f # check for symbology
+        elseif nextsubtype != :code128a && codeunit(msg, ind) ≤ 0x1f # check for symbology
             if nextsubtype == :code128b &&
-                    len_data > ind && 0x60 ≤ codeunit(data, ind+1) ≤ 0x7e
-                push!(encoding, "SHIFT A")
+                    len_msg > ind && 0x60 ≤ codeunit(msg, ind+1) ≤ 0x7e
+                push!(code, "SHIFT A")
                 nextsubtype = :code128a
             else
-                push!(encoding, "CODE A")
+                push!(code, "CODE A")
                 subtype = nextsubtype = :code128a
             end
-        elseif nextsubtype != :code128b && 96 ≤ Int(data[ind]) ≤ 126 # check for lowercase
-            if nextsubtype == :code128a && len_data > ind && 0 ≤ Int(data[ind+1]) ≤ 31
-                push!(encoding, "SHIFT B")
+        elseif nextsubtype != :code128b && 96 ≤ Int(msg[ind]) ≤ 126 # check for lowercase
+            if nextsubtype == :code128a && len_msg > ind && 0 ≤ Int(msg[ind+1]) ≤ 31
+                push!(code, "SHIFT B")
                 nextsubtype = :code128b
             else
-                push!(encoding, "CODE B")
+                push!(code, "CODE B")
                 subtype = nextsubtype = :code128b
             end
         end
 
-        # encode data chunk
+        # encode msg chunk
         if nextsubtype == :code128c
-            push!(encoding, string(data[ind:ind+1]))
+            push!(code, string(msg[ind:ind+1]))
             ind += 2
         elseif nextsubtype == :code128a
-            if codeunit(data, ind) ≤ 0x1f
-                push!(encoding, CODE128[codeunit(data, ind) + 65, :code128a])
+            if codeunit(msg, ind) ≤ 0x1f
+                push!(code, CODE128[codeunit(msg, ind) + 65, :code128a])
             else
-                push!(encoding, string(data[ind]))
+                push!(code, string(msg[ind]))
             end
             ind += 1
         else
-            push!(encoding, string(data[ind]))
+            push!(code, string(msg[ind]))
             ind += 1
         end
         nextsubtype = subtype
     end
-    append!(encoding, ["CHECKSUM", "STOP"])
-    return encoding
+    append!(code, ["CHECKSUM", "STOP"])
+    return code
 end
 
 """
-    get_encoding(data::AbstractString, encoding_type::Symbol)
+    encode(msg::AbstractString, encoding_type::Symbol)
 
-Return the encoded sequence from the given `data`, following the specifications determined
+Return the encoded sequence from the given `msg`, following the specifications determined
 by the `encoding_type`.
 
 Currently, only Code128 specification is available.
@@ -193,13 +193,13 @@ follows the specifications in "GS1 General Specifications, Version 13, Issue 1, 
 Section 5.4.7.7. Use of Start, Code Set, and Shift symbols to Minimize Symbol Length
 (Informative), pages 268 to 269."
 
-The `data` needs to be a string of ascii characteres to be encoded, otherwise the method
+The `msg` needs to be a string of ascii characteres to be encoded, otherwise the method
 throws an `ArgumentError`.
 
 # Examples
 
 ```jldoctest
-julia> encoding = get_encoding("000132", :code128c)
+julia> code = encode("000132", :code128c)
 6-element Vector{String}:
  "START C"
  "00"
@@ -208,7 +208,7 @@ julia> encoding = get_encoding("000132", :code128c)
  "CHECKSUM"
  "STOP"
 
- julia> encoding = get_encoding("ABC", :code128a)
+ julia> code = encode("ABC", :code128a)
  6-element Vector{String}:
   "START A"
   "A"
@@ -217,7 +217,7 @@ julia> encoding = get_encoding("000132", :code128c)
   "CHECKSUM"
   "STOP"
 
-julia> encoding = get_encoding("AaBC\x02", :code128)
+julia> code = encode("AaBC\x02", :code128)
 9-element Vector{String}:
  "START B"
  "A"
@@ -230,15 +230,15 @@ julia> encoding = get_encoding("AaBC\x02", :code128)
  "STOP"
 ```
 """
-function get_encoding(data::AbstractString, encoding_type::Symbol)
+function encode(msg::AbstractString, encoding_type::Symbol)
     if encoding_type == :code128
-        return _get_encoding_code128(data)
+        return _encode_code128(msg)
     elseif encoding_type == :code128a
-        return _get_encoding_code128a(data)
+        return _encode_code128a(msg)
     elseif encoding_type == :code128b
-        return _get_encoding_code128b(data)
+        return _encode_code128b(msg)
     elseif encoding_type == :code128c
-        return _get_encoding_code128c(data)
+        return _encode_code128c(msg)
     else
         throw(
             ArgumentError(
@@ -248,35 +248,46 @@ function get_encoding(data::AbstractString, encoding_type::Symbol)
     end
 end
 
-function _decode_code128(encoding::Vector{String})
-    m = match(r"^START (A|B|C)$", first(encoding))
+function _decode_code128(code::Vector{String})
+    m = match(r"^START (A|B|C)$", first(code))
     m !== nothing || throw(
         ArgumentError(
-            "First element of `encoding` should be either `START A`, `START B` or `START C`"
+            "First element of `code` should be either `START A`, `START B` or `START C`"
         ),
     )
     subtype = Symbol("code128$(lowercase(m.captures[1]))")
     nextsubtype = subtype    
-    data = ""
+    msg = ""
 
-    for c in encoding
-        if nextsubtype == :code128a
-
-        elseif nextsubtype == :code128b
-
+    for c in code
+        if nextsubtype == :code128a && !startswith(c, "CHECKSUM")
+            val = CODE128.value[CODE128.code128a .== c][1]
+            if val ≤ 63
+                msg *= Char(val)
+            elseif val ≤ 95
+                msg *= Char(val - 65)
+            end
+        elseif startswith(c, r"^CODE [A|B|C]$")
+            nextsubtype = subtype = Symbol("code128$(lowercase(c[end]))")
+        elseif startswith(c, r"^SHIFT [A|B|C]$")
+            nextsubtype = Symbol("code128$(lowercase(c[end]))")
+        elseif nextsubtype == :code128b && !startswith(c, "CHECKSUM")
+            if CODE128.value[CODE128.code128b .== c][1] ≤ 94
+                msg *= c
+            end
         elseif nextsubtype == :code128c && all(isdigit, c)
-            data *= c
+            msg *= c
         end
     end
-
+    return msg
 end
 
 
 """
 """
-function decode(encoding::Vector{String}, encoding_type::Symbol)
+function decode(code::Vector{String}, encoding_type::Symbol)
     if encoding_type in (:code128, :code128a, :code128b, :code128c)
-        decoded = _decode_code128(encoding::Vector{String})
+        decoded = _decode_code128(code::Vector{String})
     else
         throw(
             ArgumentError(

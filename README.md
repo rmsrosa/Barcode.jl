@@ -8,7 +8,7 @@ Currently, only code128 is being implemented, but other barcodes might be implem
 
 ## Examples
 
-The main encoding methods are `get_encoding(data::AbstractString, encoding_type::Symbol)`, which yields a Code128 symbolic encoding for the given `data`, `get_pattern(encoding::Vector{<:AbstractString}, encoding_type::Symbol)`, which yields the bar pattern for the given `encoding`, and `get_pattern(data::AbstractString, encoding_type::Symbol)`, which yields the bar pattern directly from the `data`(which simply calls the previous two methods).
+The main encoding methods are `encode(msg::AbstractString, encoding_type::Symbol)`, which yields a Code128 symbolic encoding for the given `msg`, `barcode_pattern(code::Vector{<:AbstractString}, encoding_type::Symbol)`, which yields the bar pattern for the given `code`, and `barcode_pattern(msg::AbstractString, encoding_type::Symbol)`, which yields the bar pattern directly from the `msg`(which simply calls the previous two methods).
 
 Currently, only Code128 is implemented, for which one should set `encoding_type` to `:code128`, or one of its subtypes `:code128a`, `:code128b`, or `:code128c`.
 
@@ -27,7 +27,7 @@ julia> zip = "12.345-678"
 julia> zip = replace(zip, r"\s|\.|\-" => "")
 "12345678"
 
-julia> binary_pattern = Barcode.get_pattern(zip, :code128)
+julia> pattern = Barcode.barcode_pattern(zip, :code128)
 10-element Vector{String}:
  "00000000000"
  "11010011100"
@@ -40,14 +40,14 @@ julia> binary_pattern = Barcode.get_pattern(zip, :code128)
  "11"
  "00000000000"
 
-julia> prod(binary_pattern)
+julia> prod(pattern)
 "00000000000110100111001011001110010001011000111000101101100001010010001110110110001110101100000000000"
 ```
 
-One can see the encoding with `get_encoding`:
+One can see the code with `encode`:
 
 ```julia
-julia> encoding = Barcode.get_encoding(zip, :code128)
+julia> code = Barcode.encode(zip, :code128)
 7-element Vector{String}:
  "START C"
  "12"
@@ -58,7 +58,7 @@ julia> encoding = Barcode.get_encoding(zip, :code128)
  "STOP"
 ```
 
-Once the `binary_pattern` is obtained, one can create a Gray Image with `img = Barcode.pattern_img(binary_pattern; img_height = 20)`. After that, you can save it with `FileIO`.
+Once the `pattern` is obtained, one can create a Gray Image with `img = Barcode.barcode_img(pattern; img_height = 20)`. After that, you can save it with `FileIO`.
 
 ```julia
 julia> using FileIO
@@ -66,14 +66,14 @@ julia> using FileIO
 julia> FileIO.save("img/zipcode_12345678.png", img)
 ```
 
-Here is the result of saving the zip code above to a PNG file with `Barcode.pattern_img("img/zipcode_12345678.png", binary_pattern)`:
+Here is the result of saving the zip code above to a PNG file with `Barcode.barcode_img("img/zipcode_12345678.png", pattern)`:
 
 ![Zip Code 12.345-678](img/zipcode_12345678.png)
 
 Here is another example with mixed subtypes:
 
 ```julia
-julia> encoding = get_encoding("CSE370", :code128)
+julia> code = encode("CSE370", :code128)
 9-element Vector{String}:
  "START B"
  "C"
@@ -85,7 +85,7 @@ julia> encoding = get_encoding("CSE370", :code128)
  "CHECKSUM"
  "STOP"
 
-julia> binary_pattern = Barcode.get_pattern(encoding, :code128)
+julia> pattern = Barcode.barcode_pattern(code, :code128)
 12-element Vector{String}:
  "00000000000"
  "11010010000"
@@ -100,7 +100,7 @@ julia> binary_pattern = Barcode.get_pattern(encoding, :code128)
  "11"
  "00000000000"
 
-julia> img = Barcode.pattern_img(binary_pattern)
+julia> img = Barcode.barcode_img(pattern)
 
 julia> FileIO.save("img/CSE370.png", img)
 ```

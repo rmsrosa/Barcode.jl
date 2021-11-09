@@ -4,18 +4,18 @@ using FileIO
 
 @testset "Encoding" begin
     @testset "Code128a" begin
-        let encoding = Barcode.get_encoding("A", :code128a)
-            @test length(encoding) == 4
-            @test encoding == [
+        let code = Barcode.encode("A", :code128a)
+            @test length(code) == 4
+            @test code == [
                 "START A",
                 "A",
                 "CHECKSUM",
                 "STOP",
             ]
         end
-        let encoding = Barcode.get_encoding("\x02A\x03", :code128a)
-            @test length(encoding) == 6
-            @test encoding == [
+        let code = Barcode.encode("\x02A\x03", :code128a)
+            @test length(code) == 6
+            @test code == [
                 "START A",
                 "STX",
                 "A",
@@ -27,18 +27,18 @@ using FileIO
     end
 
     @testset "Code128b" begin
-        let encoding = Barcode.get_encoding("A", :code128b)
-            @test length(encoding) == 4
-            @test encoding == [
+        let code = Barcode.encode("A", :code128b)
+            @test length(code) == 4
+            @test code == [
                 "START B",
                 "A",
                 "CHECKSUM",
                 "STOP",
             ]
         end
-        let encoding = Barcode.get_encoding("aBc", :code128b)
-            @test length(encoding) == 6
-            @test encoding == [
+        let code = Barcode.encode("aBc", :code128b)
+            @test length(code) == 6
+            @test code == [
                 "START B",
                 "a",
                 "B",
@@ -50,18 +50,18 @@ using FileIO
     end
 
     @testset "Code128b" begin
-        let encoding = Barcode.get_encoding("A", :code128b)
-            @test length(encoding) == 4
-            @test encoding == [
+        let code = Barcode.encode("A", :code128b)
+            @test length(code) == 4
+            @test code == [
                 "START B",
                 "A",
                 "CHECKSUM",
                 "STOP",
             ]
         end
-        let encoding = Barcode.get_encoding("aBc", :code128b)
-            @test length(encoding) == 6
-            @test encoding == [
+        let code = Barcode.encode("aBc", :code128b)
+            @test length(code) == 6
+            @test code == [
                 "START B",
                 "a",
                 "B",
@@ -73,18 +73,18 @@ using FileIO
     end
 
     @testset "Code128c" begin
-        let encoding = Barcode.get_encoding("00", :code128c)
-            @test length(encoding) == 4
-            @test encoding == [
+        let code = Barcode.encode("00", :code128c)
+            @test length(code) == 4
+            @test code == [
                 "START C",
                 "00",
                 "CHECKSUM",
                 "STOP",
             ]
         end
-        let encoding = Barcode.get_encoding("012345", :code128c)
-            @test length(encoding) == 6
-            @test encoding == [
+        let code = Barcode.encode("012345", :code128c)
+            @test length(code) == 6
+            @test code == [
                 "START C",
                 "01",
                 "23",
@@ -96,9 +96,9 @@ using FileIO
     end
 
     @testset "Code128 mixed subtypes" begin
-        let encoding = Barcode.get_encoding("\x02Aa\tA0902a93892\x03000a\x04z", :code128)
-            @test length(encoding) == 28
-            @test encoding == [
+        let code = Barcode.encode("\x02Aa\tA0902a93892\x03000a\x04z", :code128)
+            @test length(code) == 28
+            @test code == [
                 "START A",
                 "STX",
                 "A",
@@ -135,9 +135,9 @@ end
 @testset "Patterns" begin
     
     @testset "code128 subtypes" begin
-        let binary_pattern = Barcode.get_pattern("A", :code128a)
-            @test length(binary_pattern) == 7
-            @test binary_pattern == [
+        let pattern = Barcode.barcode_pattern("A", :code128a)
+            @test length(pattern) == 7
+            @test pattern == [
                 "00000000000", # Quiet zone
                 "11010000100", # START A
                 "10100011000", # A
@@ -148,9 +148,9 @@ end
             ]
         end
 
-        let binary_pattern = Barcode.get_pattern("a", :code128b)
-            @test length(binary_pattern) == 7
-            @test binary_pattern == [
+        let pattern = Barcode.barcode_pattern("a", :code128b)
+            @test length(pattern) == 7
+            @test pattern == [
                 "00000000000", # Quiet zone
                 "11010010000", # START B
                 "10010110000", # a
@@ -161,9 +161,9 @@ end
             ]
         end
 
-        let binary_pattern = Barcode.get_pattern("00", :code128c)
-            @test length(binary_pattern) == 7
-            @test binary_pattern == [
+        let pattern = Barcode.barcode_pattern("00", :code128c)
+            @test length(pattern) == 7
+            @test pattern == [
                 "00000000000", # Quiet zone
                 "11010011100", # START C
                 "11011001100", # 00
@@ -176,9 +176,9 @@ end
     end
 
     @testset "code128 auto" begin
-        let binary_pattern = Barcode.get_pattern("A", :code128)
-            @test length(binary_pattern) == 7
-            @test binary_pattern == [
+        let pattern = Barcode.barcode_pattern("A", :code128)
+            @test length(pattern) == 7
+            @test pattern == [
                 "00000000000", # Quiet zone
                 "11010010000", # START B
                 "10100011000", # A
@@ -189,9 +189,9 @@ end
             ]
         end
 
-        let binary_pattern = Barcode.get_pattern("a", :code128)
-            @test length(binary_pattern) == 7
-            @test binary_pattern == [
+        let pattern = Barcode.barcode_pattern("a", :code128)
+            @test length(pattern) == 7
+            @test pattern == [
                 "00000000000", # Quiet zone
                 "11010010000", # START B
                 "10010110000", # a
@@ -202,9 +202,9 @@ end
             ]
         end
 
-        let binary_pattern = Barcode.get_pattern("00", :code128)
-            @test length(binary_pattern) == 7
-            @test binary_pattern == [
+        let pattern = Barcode.barcode_pattern("00", :code128)
+            @test length(pattern) == 7
+            @test pattern == [
                 "00000000000", # Quiet zone
                 "11010011100", # START C
                 "11011001100", # 00
@@ -215,9 +215,9 @@ end
             ]
         end
 
-        let binary_pattern = Barcode.get_pattern("\x02A\tB\x07\x03", :code128)
-            @test length(binary_pattern) == 12
-            @test binary_pattern == [
+        let pattern = Barcode.barcode_pattern("\x02A\tB\x07\x03", :code128)
+            @test length(pattern) == 12
+            @test pattern == [
                 "00000000000", # Quiet zone
                 "11010000100", # START A
                 "10010000110", # \x02 = STX = Start of Text
@@ -236,12 +236,12 @@ end
 
     @testset "mixed subtypes" begin
 
-        let binary_pattern = Barcode.get_pattern(
+        let pattern = Barcode.barcode_pattern(
                 ["START A", "A", "B", "SHIFT B", "a", "A", "CODE C", "00", "CHECKSUM", "STOP"],
                 :code128
             )
-            @test length(binary_pattern) == 13
-            @test binary_pattern == [
+            @test length(pattern) == 13
+            @test pattern == [
                 "00000000000", # Quiet zone
                 "11010000100", # "START A" (103)
                 "10100011000", # "A" (33)
@@ -259,7 +259,7 @@ end
             ]
         end
 
-        let binary_pattern = Barcode.get_pattern(
+        let pattern = Barcode.barcode_pattern(
                 [
                     "START C",
                     "FNC 1",
@@ -284,10 +284,10 @@ end
     @testset "save Images.jl" begin
         let zip = "12.345-678"
             zip = replace(zip, r"\s|\.|\-" => "")
-            binary_pattern = Barcode.get_pattern(zip, :code128)
-            img = Barcode.pattern_img(binary_pattern)
-            @test length(binary_pattern) == 10
-            @test binary_pattern == [
+            pattern = Barcode.barcode_pattern(zip, :code128)
+            img = Barcode.barcode_img(pattern)
+            @test length(pattern) == 10
+            @test pattern == [
                 "00000000000", # Quiet zone
                 "11010011100", # START C
                 "10110011100", # 12
@@ -303,10 +303,10 @@ end
             @test FileIO.save("../img/zipcode_$zip.png", img) === nothing
         end
 
-        let binary_pattern = Barcode.get_pattern("CSE370", :code128)
-            img = Barcode.pattern_img(binary_pattern)
-            @test length(binary_pattern) == 12
-            @test binary_pattern == [
+        let pattern = Barcode.barcode_pattern("CSE370", :code128)
+            img = Barcode.barcode_img(pattern)
+            @test length(pattern) == 12
+            @test pattern == [
                 "00000000000" # Quiet zone
                 "11010010000" # START B
                 "10001000110" # C

@@ -1,6 +1,6 @@
 # Get pattern
 
-function _get_pattern_code128(encoding::Vector{<:AbstractString})
+function _barcode_pattern_code128(encoding::Vector{<:AbstractString})
 
     m = match(r"^START (A|B|C)$", first(encoding))
     m !== nothing || throw(
@@ -73,7 +73,7 @@ function _get_pattern_code128(encoding::Vector{<:AbstractString})
 end
 
 """
-    get_pattern(encoding::Vector{<:AbstractString}, encoding_type::Symbol)
+    barcode_pattern(encoding::Vector{<:AbstractString}, encoding_type::Symbol)
 
 Return the binary pattern for a given vector, following the specifications determined
     by the `encoding_type`.
@@ -96,7 +96,7 @@ for the check sum to be computed and included where this directive appears.
 # Examples
 
 ```jldoctest
-julia> binary_pattern = get_pattern(
+julia> binary_pattern = barcode_pattern(
        ["START C", "00", "01", "32", "CHECKSUM", "STOP"],
        :code128
        )
@@ -111,7 +111,7 @@ julia> binary_pattern = get_pattern(
  "11"
  "00000000000"
 
-julia> binary_pattern = get_pattern(
+julia> binary_pattern = barcode_pattern(
     ["START A", "A", "B", "C", "CHECKSUM", "STOP"],
     :code128
     )
@@ -127,9 +127,9 @@ julia> binary_pattern = get_pattern(
  "00000000000"
 ```
 """
-function get_pattern(encoding::Vector{<:AbstractString}, encoding_type::Symbol)
+function barcode_pattern(encoding::Vector{<:AbstractString}, encoding_type::Symbol)
     if encoding_type in (:code128, :code128a, :code128b, :code128c)
-        pattern = _get_pattern_code128(encoding)
+        pattern = _barcode_pattern_code128(encoding)
     else
         throw(
             ArgumentError(
@@ -141,12 +141,12 @@ function get_pattern(encoding::Vector{<:AbstractString}, encoding_type::Symbol)
 end
 
 """
-    get_pattern(data::AbstractString, encoding_type::Symbol)
+    barcode_pattern(msg::AbstractString, encoding_type::Symbol)
 
-Retrieve the binary pattern for the given `data`, according to the encoding Code128.
+Retrieve the binary pattern for the given `msg`, according to the encoding Code128.
 
 If `mode` is set to either `:code128a`, `:code128b`, or `:code128c`, it returns the encoding
-following the corresponding subtype. It throws an `ArgumentError` if the given `data` is not
+following the corresponding subtype. It throws an `ArgumentError` if the given `msg` is not
 suitable for encoding with the given subtype.
 
 If `mode` is not given or if it is set to `:auto`, which is the default, then it attempts
@@ -154,10 +154,10 @@ to use either of these subtypes or a combination of them. It throws an `Argument
 not possible to do so.
 
 The encoding is returned as a vector of string patterns, with each element corresponding
-to the encoding of each symbol in `data`, and appended with the proper quiet zones and the
+to the encoding of each symbol in `code`, and appended with the proper quiet zones and the
 `START`, `STOP`, checksum, and ending bar patterns.
 """
-function get_pattern(data::AbstractString, encoding_type::Symbol)
-    encoding = get_encoding(data, encoding_type)
-    return get_pattern(encoding, encoding_type)
+function barcode_pattern(msg::AbstractString, encoding_type::Symbol)
+    encoding = encode(msg, encoding_type)
+    return barcode_pattern(encoding, encoding_type)
 end
