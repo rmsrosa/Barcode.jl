@@ -311,7 +311,7 @@ end
             x, w = Barcode.barcode_positions(pattern)
             Plots.plot(
                 [x'; x' + w'], ones(2, length(x)), color = :black, fill = true,
-                xlims = (0, length(pattern)),  ylims = (0, 1), border = :none,
+                xlims = (1, length(pattern)),  ylims = (0, 1), border = :none,
                 legend = nothing
             )
             @test Plots.savefig("../img/zipcode_plot.png") === nothing
