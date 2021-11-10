@@ -7,7 +7,7 @@ the image reveals the barcode.
 
 You can save the generated image via `FileIO.save`, using any format accepted by `FileIO`.
 """
-function barcode_img(pattern; img_height = 50)
+function barcode_img(pattern::AbstractString; img_height = 50)
     img =
         Gray.(
             [
@@ -19,7 +19,7 @@ function barcode_img(pattern; img_height = 50)
     return img
 end
 
-function barcode_positions(pattern)
+function barcode_positions(pattern::AbstractString)
     x = Int[]
     w = Int[]
 
@@ -38,4 +38,16 @@ function barcode_positions(pattern)
     return x, w
 end
 
+function barcode_widths(pattern::AbstractString)
+    w = ""
 
+    ind = findfirst(==('1'), pattern)
+    while ind !== nothing
+        c = pattern[ind]
+        next_ind = findnext(!=(c), pattern, ind)
+        next_ind !== nothing && (w *= string(next_ind - ind))
+        ind = next_ind
+    end
+    w = w[begin:end-1] # drop the ending `11`, which is a bar with width 2
+    return w
+end

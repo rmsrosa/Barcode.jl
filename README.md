@@ -102,6 +102,13 @@ julia> msg_back2 = Barcode.barcode_decode(pattern, :code128) # directly from pat
 "12345678"
 ```
 
+Another representation of the barcode is with the widths of the bars and of the spaces between bars. The `START C` code pattern `11010011100`, for instance, can also be represented by `211232`, which are the widths of each bar and each space, with the correspondance `11 => 2`, `0 => 1`, `1 => 1`, `00 => 2`, `111 => 3`, `00 => 2`. Each code pattern always starts with `1`, ends with `0`, and has exactly three bars and three spaces. We can get this alternative representation for the barcode with the method `barcode_widths(pattern::AbstractString)`.
+
+```julia
+julia> Barcode.barcode_widths(pattern)
+"211232112232131123331121241112133121233111"
+```
+
 Here is another example with mixed subtypes:
 
 ```julia
