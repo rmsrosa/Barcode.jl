@@ -61,12 +61,12 @@ julia> using FileIO
 
 julia> img = Barcode.barcode_img(pattern)
 
-julia> FileIO.save("img/zipcode_12345678.png", img)
+julia> FileIO.save("img/zipcode_img.png", img)
 ```
 
-Here is the result of saving the zip code above to a PNG file with `Barcode.barcode_img("img/zipcode_12345678.png", pattern)`:
+Here is the result of saving the zip code above to a PNG file with `Barcode.barcode_img("img/zipcode_img.png", pattern)`:
 
-![Zip Code 12.345-678](img/zipcode_12345678.png)
+![Zip Code 12.345-678](img/zipcode_img.png)
 
 With [JuliaImages](https://juliaimages.org/stable/), one can resize the generated image as desired.
 

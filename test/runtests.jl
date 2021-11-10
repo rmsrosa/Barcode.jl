@@ -295,7 +295,7 @@ end
             zip_code = replace(zip_code, r"\s|\.|\-" => "")
             pattern = Barcode.barcode_pattern(zip_code, :code128)
             img = Barcode.barcode_img(pattern)
-            @test FileIO.save("../img/zipcode_$zip_code.png", img) === nothing
+            @test FileIO.save("../img/zipcode_img.png", img) === nothing
         end
 
         let pattern = Barcode.barcode_pattern("CSE370", :code128)
