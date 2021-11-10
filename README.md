@@ -6,7 +6,7 @@ This package is under development and is not yet registered.
 
 Currently, only code128 is being implemented, but other barcodes might be implemented in the future. Contributions are welcome!
 
-## Examples
+## Methods
 
 The main encoding methods are 
 
@@ -20,10 +20,13 @@ The main decoding methods are
 * `barcode_depattern(pattern::AbstractString, encoding_type::Symbol)`: yields the `code` associated with the given barcode pattern `pattern`, according to the given `encoding_type`;
 * `barcode_decode(pattern::AbstractString, encoding_type::Symbol)`: yields the message encoded in the given barcode pattern `pattern`, according to the given `encoding_type`.
 
-
 Currently, only Code128 is implemented, for which one should set `encoding_type` to `:code128`. When encoding, it is also possible to set the `encoding_type` to either `:code128a`, `:code128b`, or `:code128c`, following the subtypes Code128A, Code128B or Code128C, respectively.
 
 If `:code128` is given, the method attempts to infer whether `code` can be encoded using `code128c` (only digits, with even length), `code128b`, or `code128a` subtypes, or it will then look for an optimized mixed-subtype encoding.
+
+## Examples
+
+### Zip code barcode
 
 Here is an example with a ZIP code:
 
@@ -111,10 +114,33 @@ julia> Barcode.barcode_widths(pattern)
 "211232112232131123331121241112133121233111"
 ```
 
+### Barcode for Barcode.jl
+
+The image for the github social preview of this package was created from the barcode for "Barcode.jl", with
+
+```julia
+julia> msg = "Barcode.jl"
+"Barcode.jl"
+
+julia> pattern = Barcode.barcode_pattern(msg, :code128)
+"00000000000110100100001000101100010010110000100100111101000010110010001111010100001001101011001000010011001110100001100101100101000011001101100110001110101100000000000"
+
+julia> x, w = Barcode.barcode_positions(pattern)
+([12, 15, 18, 23, 27, 29, 34, 37, 39, 45  …  122, 126, 128, 133, 137, 140, 144, 149, 153, 155], [2, 1, 1, 1, 1, 2, 1, 1, 2, 1  …  2, 1, 1, 2, 2, 2, 2, 3, 1, 2])
+
+julia> plot([x'; x' + w'], ones(2, length(x)), color = :black, fill = true, xlims = (1, length(pattern)),  ylims = (0, 1), border = :none, legend = nothing, size = (896, 448))
+
+julia> savefig("img/barcodejl.svg")
+```
+
+We save the barcode plot to `SVG` and added the text and extra margins with [Inkspace](https://inkscape.org), adjusting the size to 1280 x 640.
+
+### Mixed subtypes
+
 Here is another example with mixed subtypes:
 
 ```julia
-julia> code = encode("CSE370", :code128)
+julia> code = Barcode.encode("CSE370", :code128)
 9-element Vector{String}:
  "START B"
  "C"
@@ -138,13 +164,13 @@ julia> FileIO.save("img/CSE370.png", img)
 
 ## To-do
 
-There are still a few things to be done in regards to the generated images, and with the image formats to play along with other graphic tools.
+- [ ] Encoding in Code128 is not yet complete. It needs to be able to handle the directive FNC4 to access iso-latin ISO/IEC 8859-1 characters.
 
-Encoding in Code128 is not yet complete. It needs to be able to handle the directive FNC4 to access iso-latin ISO/IEC 8859-1 characters.
+- [ ] It can also be improved to generate GSM-128 encoding.
 
-It could also be improved to generate GSM-128 encoding.
+- [ ] Documentation and reduced README.
 
-And there are plenty of other barcode formats that can be implemented.
+- [ ] There are plenty of other barcode formats that can be implemented.
 
 ## License
 
