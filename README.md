@@ -170,7 +170,7 @@ julia> img = Barcode.barcode_img(pattern)
 julia> FileIO.save("img/abc1234.png", img)
 ```
 
-![CSE370](img/CSE370.png)
+![CSE370](img/abc1234.png)
 
 ## To-do
 
