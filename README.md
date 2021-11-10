@@ -87,7 +87,7 @@ Here is the resulting image:
 
 ![Zip Code 12.345-678 with Plots.jl](img/zipcode_plot.png)
 
-One can decode with
+One can decode it directly from the pattern or from the code, with
 
 ```julia
 julia> code_back = Barcode.barcode_depattern(pattern, :code128)
@@ -172,13 +172,15 @@ julia> FileIO.save("img/abc1234.png", img)
 
 ![CSE370](img/abc1234.png)
 
-## To-do
+## To do
 
 - [ ] Encoding in Code128 is not yet complete. It needs to be able to handle the directive FNC4 to access iso-latin ISO/IEC 8859-1 characters.
 
 - [ ] It can also be improved to generate GSM-128 encoding.
 
-- [ ] Documentation and reduced README.
+- [ ] Add Documentation and simplify README.
+
+- [ ] Register the package.
 
 - [ ] There are plenty of other barcode formats that can be implemented.
 

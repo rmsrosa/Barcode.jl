@@ -337,7 +337,7 @@ end
             Plots.plot(
                 [x'; x' + w'], ones(2, length(x)), color = :black, fill = true,
                 xlims = (1, length(pattern)),  ylims = (0, 1), border = :none,
-                legend = nothing
+                legend = nothing, size = (400, 150)
             )
             @test Plots.savefig("../img/zipcode_plot.png") === nothing
         end
