@@ -8,20 +8,20 @@ using Plots # it is in runtests.jl just to generate the image for README
     @testset "Code128a" begin
         let code = Barcode.encode("A", :code128a)
             @test code == [
-                "START A",
-                "A",
-                "CHECKSUM",
-                "STOP",
+                "START A"
+                "A"
+                "CHECKSUM"
+                "STOP"
             ]
         end
         let code = Barcode.encode("\x02A\x03", :code128a)
             @test code == [
-                "START A",
-                "STX",
-                "A",
-                "ETX",
-                "CHECKSUM",
-                "STOP",
+                "START A"
+                "STX"
+                "A"
+                "ETX"
+                "CHECKSUM"
+                "STOP"
             ]
         end
     end
@@ -29,20 +29,20 @@ using Plots # it is in runtests.jl just to generate the image for README
     @testset "Code128b" begin
         let code = Barcode.encode("A", :code128b)
             @test code == [
-                "START B",
-                "A",
-                "CHECKSUM",
-                "STOP",
+                "START B"
+                "A"
+                "CHECKSUM"
+                "STOP"
             ]
         end
         let code = Barcode.encode("aBc", :code128b)
             @test code == [
-                "START B",
-                "a",
-                "B",
-                "c",
-                "CHECKSUM",
-                "STOP",
+                "START B"
+                "a"
+                "B"
+                "c"
+                "CHECKSUM"
+                "STOP"
             ]
         end
     end
@@ -50,20 +50,20 @@ using Plots # it is in runtests.jl just to generate the image for README
     @testset "Code128b" begin
         let code = Barcode.encode("A", :code128b)
             @test code == [
-                "START B",
-                "A",
-                "CHECKSUM",
-                "STOP",
+                "START B"
+                "A"
+                "CHECKSUM"
+                "STOP"
             ]
         end
         let code = Barcode.encode("aBc", :code128b)
             @test code == [
-                "START B",
-                "a",
-                "B",
-                "c",
-                "CHECKSUM",
-                "STOP",
+                "START B"
+                "a"
+                "B"
+                "c"
+                "CHECKSUM"
+                "STOP"
             ]
         end
     end
@@ -71,55 +71,69 @@ using Plots # it is in runtests.jl just to generate the image for README
     @testset "Code128c" begin
         let code = Barcode.encode("00", :code128c)
             @test code == [
-                "START C",
-                "00",
-                "CHECKSUM",
-                "STOP",
+                "START C"
+                "00"
+                "CHECKSUM"
+                "STOP"
             ]
         end
         let code = Barcode.encode("012345", :code128c)
             @test code == [
-                "START C",
-                "01",
-                "23",
-                "45",
-                "CHECKSUM",
-                "STOP",
+                "START C"
+                "01"
+                "23"
+                "45"
+                "CHECKSUM"
+                "STOP"
             ]
         end
     end
 
-    @testset "Code128 mixed subtypes" begin
+    @testset "Code128" begin
+        let code = Barcode.encode("CSE370", :code128)
+            @test code == [
+                "START B"
+                "C"
+                "S"
+                "E"
+                "3"
+                "7"
+                "0"
+                "CHECKSUM"
+                "STOP"
+            ]
+        end
+
         let code = Barcode.encode("\x02Aa\tA0902a93892\x03000a\x04z", :code128)
             @test code == [
-                "START A",
-                "STX",
-                "A",
-                "SHIFT B",
-                "a",
-                "HT",
-                "A",
-                "CODE C",
-                "09",
-                "02",
-                "CODE B",
-                "a",
-                "9",
-                "CODE C",
-                "38",
-                "92",
-                "CODE A",
-                "ETX",
-                "0",
-                "CODE C",
-                "00",
-                "CODE B",
-                "a",
-                "SHIFT A",
-                "EOT",
-                "z",
-                "CHECKSUM",
-                "STOP",
+                "START A"
+                "STX"
+                "A"
+                "SHIFT B"
+                "a"
+                "HT"
+                "A"
+                "CODE C"
+                "09"
+                "02"
+                "CODE B"
+                "a"
+                "9"
+                "CODE C"
+                "38"
+                "92"
+                "CODE A"
+                "ETX"
+                "0"
+                "0"
+                "0"
+                "SHIFT B"
+                "a"
+                "EOT"
+                "CODE B"
+                "z"
+                "CHECKSUM"
+                "STOP"
             ]
         end
     end
@@ -232,7 +246,18 @@ end
     @testset "mixed subtypes" begin
 
         let pattern = Barcode.barcode_pattern(
-                ["START A", "A", "B", "SHIFT B", "a", "A", "CODE C", "00", "CHECKSUM", "STOP"],
+                [
+                    "START A"
+                    "A"
+                    "B"
+                    "SHIFT B"
+                    "a"
+                    "A"
+                    "CODE C"
+                    "00"
+                    "CHECKSUM"
+                    "STOP"
+                ],
                 :code128
             )
             @test pattern ==
@@ -254,17 +279,17 @@ end
 
         let pattern = Barcode.barcode_pattern(
                 [
-                    "START C",
-                    "FNC 1",
-                    "42",
-                    "18",
-                    "40",
-                    "20",
-                    "50",
-                    "CODE A",
-                    "0",
-                    "CHECKSUM",
-                    "STOP",
+                    "START C"
+                    "FNC 1"
+                    "42"
+                    "18"
+                    "40"
+                    "20"
+                    "50"
+                    "CODE A"
+                    "0"
+                    "CHECKSUM"
+                    "STOP"
                 ],
                 :code128,
             )

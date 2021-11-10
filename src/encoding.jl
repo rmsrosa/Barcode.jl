@@ -129,13 +129,19 @@ function _encode_code128(msg)
                 push!(code, "CODE B")
                 nextsubtype = subtype = :code128b
             end             
-        elseif nextsubtype != :code128c && are_digits[ind] && 
+        elseif nextsubtype != :code128c && are_digits[ind] && (
                 (
-                    (findnext(iszero, are_digits, ind) !== nothing &&
-                        iseven(findnext(iszero, are_digits, ind) - ind)) ||
-                    (findnext(iszero, are_digits, ind) === nothing &&
-                        len_msg > ind && isodd(len_msg - ind))
+                    findnext(iszero, are_digits, ind) !== nothing &&
+                    (0, 2) ≤ reverse(divrem(findnext(iszero, are_digits, ind) - ind, 2)) < (1, 0)
+                    # iseven(findnext(iszero, are_digits, ind) - ind)
+                ) ||
+                    
+                (
+                    findnext(iszero, are_digits, ind) === nothing &&
+                    (0, 2) ≤ reverse(divrem(len_msg - ind + 1, 2)) < (1, 0)
+                    # len_msg > ind && isodd(len_msg - ind)
                 )
+            )
             push!(code, "CODE C")
             nextsubtype = subtype = :code128c
         elseif nextsubtype != :code128a && codeunit(msg, ind) ≤ 0x1f # check for symbology
