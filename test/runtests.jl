@@ -323,9 +323,9 @@ end
             @test FileIO.save("../img/zipcode_img.png", img) === nothing
         end
 
-        let pattern = Barcode.barcode_pattern("CSE370", :code128)
+        let pattern = Barcode.barcode_pattern("\x02abc1234\x03", :code128)
             img = Barcode.barcode_img(pattern)
-            @test FileIO.save("../img/CSE370.png", img) === nothing
+            @test FileIO.save("../img/abc1234.png", img) === nothing
         end
     end
 

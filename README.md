@@ -137,27 +137,37 @@ We save the barcode plot to `SVG` and added the text and extra margins with [Ink
 
 ### Mixed subtypes
 
-Here is another example with mixed subtypes:
+Here is another example, with mixed subtypes:
 
 ```julia
-julia> code = Barcode.encode("CSE370", :code128)
-9-element Vector{String}:
- "START B"
- "C"
- "S"
- "E"
- "3"
+julia> msg = "\x02abc1234\x03"
+"\x02abc1234\x03"
+
+julia> println(msg)
+abc1234
+
+julia> code = Barcode.encode(msg, :code128)
+13-element Vector{String}:
+ "START A"
+ "STX"
+ "CODE B"
+ "a"
+ "b"
+ "c"
  "CODE C"
- "70"
+ "12"
+ "34"
+ "CODE A"
+ "ETX"
  "CHECKSUM"
  "STOP"
 
 julia> pattern = Barcode.barcode_pattern(code, :code128)
-"000000000001101001000010001000110110111010001000110100011001011100101110111101011000010010010001100110001110101100000000000"
+"00000000000110100001001001000011010111101110100101100001001000011010000101100101110111101011001110010001011000111010111101000010110011110010100110001110101100000000000"
 
 julia> img = Barcode.barcode_img(pattern)
 
-julia> FileIO.save("img/CSE370.png", img)
+julia> FileIO.save("img/abc1234.png", img)
 ```
 
 ![CSE370](img/CSE370.png)
