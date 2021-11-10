@@ -73,6 +73,8 @@ With [JuliaImages](https://juliaimages.org/stable/), one can resize the generate
 One can also plot the barcode with `Plots`, using the utility function `Barcode.barcode_positions(pattern)`, which yields the locations (indices) of each solid bar and their width:
 
 ```julia
+julia> using Plots
+
 julia> x, w = Barcode.barcode_positions(pattern)([12, 15, 18, 23, 25, 29, 34, 38, 40, 45  …  56, 62, 64, 67, 71, 75, 78, 83, 87, 89], [2, 1, 3, 1, 2, 3, 1, 1, 2, 3  …  2, 1, 1, 1, 3, 2, 2, 3, 1, 2])
 
 julia> plot([x'; x' + w'], ones(2, length(x)), color = :black, fill = true, xlims = (0, length(pattern)),  ylims = (0, 1), border = :none, legend = nothing)
