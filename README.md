@@ -1,4 +1,4 @@
-# Barcode
+# Barcodes
 
 A [Code128](https://en.wikipedia.org/wiki/Code_128) barcode generator (see also [The 128 code](http://grandzebu.net/informatique/codbar-en/code128.htm) and [How Barcodes Work](https://courses.cs.washington.edu/courses/cse370/01au/minirproject/BarcodeBattlers/barcodes.html)).
 
@@ -31,7 +31,7 @@ If `:code128` is given, the method attempts to infer whether `code` can be encod
 Here is an example with a ZIP code:
 
 ```julia
-julia> using Barcode
+julia> using Barcodes
 
 julia> zip_code = "12.345-678"
 "12.345-678"
@@ -39,14 +39,14 @@ julia> zip_code = "12.345-678"
 julia> zip_code = replace(zip_code, r"\s|\.|\-" => "")
 "12345678"
 
-julia> pattern = Barcode.barcode_pattern(zip_code, :code128)
+julia> pattern = Barcodes.barcode_pattern(zip_code, :code128)
 "00000000000110100111001011001110010001011000111000101101100001010010001110110110001110101100000000000"
 ```
 
 One can see the code with `encode`:
 
 ```julia
-julia> code = Barcode.encode(zip_code, :code128)
+julia> code = Barcodes.encode(zip_code, :code128)
 7-element Vector{String}:
  "START C"
  "12"
@@ -62,23 +62,23 @@ Once the `pattern` is obtained, one can create a Gray Image with `barcode_img(pa
 ```julia
 julia> using FileIO
 
-julia> img = Barcode.barcode_img(pattern)
+julia> img = Barcodes.barcode_img(pattern)
 
 julia> FileIO.save("img/zipcode_img.png", img)
 ```
 
-Here is the result of saving the zip code above to a PNG file with `Barcode.barcode_img("img/zipcode_img.png", pattern)`:
+Here is the result of saving the zip code above to a PNG file with `Barcodes.barcode_img("img/zipcode_img.png", pattern)`:
 
 ![Zip Code 12.345-678](img/zipcode_img.png)
 
 With [JuliaImages](https://juliaimages.org/stable/), one can resize the generated image as desired.
 
-One can also plot the barcode with `Plots`, using the utility function `Barcode.barcode_positions(pattern)`, which yields the locations (indices) of each solid bar and their width:
+One can also plot the barcode with `Plots`, using the utility function `Barcodes.barcode_positions(pattern)`, which yields the locations (indices) of each solid bar and their width:
 
 ```julia
 julia> using Plots
 
-julia> x, w = Barcode.barcode_positions(pattern)([12, 15, 18, 23, 25, 29, 34, 38, 40, 45  …  56, 62, 64, 67, 71, 75, 78, 83, 87, 89], [2, 1, 3, 1, 2, 3, 1, 1, 2, 3  …  2, 1, 1, 1, 3, 2, 2, 3, 1, 2])
+julia> x, w = Barcodes.barcode_positions(pattern)([12, 15, 18, 23, 25, 29, 34, 38, 40, 45  …  56, 62, 64, 67, 71, 75, 78, 83, 87, 89], [2, 1, 3, 1, 2, 3, 1, 1, 2, 3  …  2, 1, 1, 1, 3, 2, 2, 3, 1, 2])
 
 julia> plot([x'; x' + w'], ones(2, length(x)), color = :black, fill = true, xlims = (1, length(pattern)),  ylims = (0, 1), border = :none, legend = nothing)
 ```
@@ -90,7 +90,7 @@ Here is the resulting image:
 One can decode it directly from the pattern or from the code, with
 
 ```julia
-julia> code_back = Barcode.barcode_depattern(pattern, :code128)
+julia> code_back = Barcodes.barcode_depattern(pattern, :code128)
 7-element Vector{String}:
  "START C"
  "12"
@@ -100,32 +100,32 @@ julia> code_back = Barcode.barcode_depattern(pattern, :code128)
  "CHECKSUM 47"
  "STOP"
 
-julia> msg_back1 = Barcode.decode(code_back, :code128) # from the depatterned code
+julia> msg_back1 = Barcodes.decode(code_back, :code128) # from the depatterned code
 "12345678"
 
-julia> msg_back2 = Barcode.barcode_decode(pattern, :code128) # directly from pattern
+julia> msg_back2 = Barcodes.barcode_decode(pattern, :code128) # directly from pattern
 "12345678"
 ```
 
 Another representation of the barcode is with the widths of the bars and of the spaces between bars. The `START C` code pattern `11010011100`, for instance, can also be represented by `211232`, which are the widths of each bar and each space, with the correspondance `11 => 2`, `0 => 1`, `1 => 1`, `00 => 2`, `111 => 3`, `00 => 2`. Each code pattern always starts with `1`, ends with `0`, and has exactly three bars and three spaces. We can get this alternative representation for the barcode with the method `barcode_widths(pattern::AbstractString)`.
 
 ```julia
-julia> Barcode.barcode_widths(pattern)
+julia> Barcodes.barcode_widths(pattern)
 "211232112232131123331121241112133121233111"
 ```
 
-### Barcode for Barcode.jl
+### Barcode social preview image for Barcodes.jl
 
-The image for the github social preview of this package was created from the barcode for "Barcode.jl", with
+The image for the github social preview of this package was created from the barcode for "Barcodes.jl", with
 
 ```julia
-julia> msg = "Barcode.jl"
-"Barcode.jl"
+julia> msg = "Barcodes.jl"
+"Barcodes.jl"
 
-julia> pattern = Barcode.barcode_pattern(msg, :code128)
+julia> pattern = Barcodes.barcode_pattern(msg, :code128)
 "00000000000110100100001000101100010010110000100100111101000010110010001111010100001001101011001000010011001110100001100101100101000011001101100110001110101100000000000"
 
-julia> x, w = Barcode.barcode_positions(pattern)
+julia> x, w = Barcodes.barcode_positions(pattern)
 ([12, 15, 18, 23, 27, 29, 34, 37, 39, 45  …  122, 126, 128, 133, 137, 140, 144, 149, 153, 155], [2, 1, 1, 1, 1, 2, 1, 1, 2, 1  …  2, 1, 1, 2, 2, 2, 2, 3, 1, 2])
 
 julia> plot([x'; x' + w'], ones(2, length(x)), color = :black, fill = true, xlims = (1, length(pattern)),  ylims = (0, 1), border = :none, legend = nothing, size = (896, 448))
@@ -146,7 +146,7 @@ julia> msg = "\x02abc1234\x03"
 julia> println(msg)
 abc1234
 
-julia> code = Barcode.encode(msg, :code128)
+julia> code = Barcodes.encode(msg, :code128)
 13-element Vector{String}:
  "START A"
  "STX"
@@ -162,10 +162,10 @@ julia> code = Barcode.encode(msg, :code128)
  "CHECKSUM"
  "STOP"
 
-julia> pattern = Barcode.barcode_pattern(code, :code128)
+julia> pattern = Barcodes.barcode_pattern(code, :code128)
 "00000000000110100001001001000011010111101110100101100001001000011010000101100101110111101011001110010001011000111010111101000010110011110010100110001110101100000000000"
 
-julia> img = Barcode.barcode_img(pattern)
+julia> img = Barcodes.barcode_img(pattern)
 
 julia> FileIO.save("img/abc1234.png", img)
 ```

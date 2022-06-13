@@ -1,4 +1,4 @@
-using Barcode
+using Barcodes
 using Test
 using FileIO
 using Plots # it is in runtests.jl just to generate the image for README
@@ -6,7 +6,7 @@ using Plots # it is in runtests.jl just to generate the image for README
 
 @testset "Encoding" begin
     @testset "Code128a" begin
-        let code = Barcode.encode("A", :code128a)
+        let code = Barcodes.encode("A", :code128a)
             @test code == [
                 "START A"
                 "A"
@@ -14,7 +14,7 @@ using Plots # it is in runtests.jl just to generate the image for README
                 "STOP"
             ]
         end
-        let code = Barcode.encode("\x02A\x03", :code128a)
+        let code = Barcodes.encode("\x02A\x03", :code128a)
             @test code == [
                 "START A"
                 "STX"
@@ -27,7 +27,7 @@ using Plots # it is in runtests.jl just to generate the image for README
     end
 
     @testset "Code128b" begin
-        let code = Barcode.encode("A", :code128b)
+        let code = Barcodes.encode("A", :code128b)
             @test code == [
                 "START B"
                 "A"
@@ -35,7 +35,7 @@ using Plots # it is in runtests.jl just to generate the image for README
                 "STOP"
             ]
         end
-        let code = Barcode.encode("aBc", :code128b)
+        let code = Barcodes.encode("aBc", :code128b)
             @test code == [
                 "START B"
                 "a"
@@ -48,7 +48,7 @@ using Plots # it is in runtests.jl just to generate the image for README
     end
 
     @testset "Code128b" begin
-        let code = Barcode.encode("A", :code128b)
+        let code = Barcodes.encode("A", :code128b)
             @test code == [
                 "START B"
                 "A"
@@ -56,7 +56,7 @@ using Plots # it is in runtests.jl just to generate the image for README
                 "STOP"
             ]
         end
-        let code = Barcode.encode("aBc", :code128b)
+        let code = Barcodes.encode("aBc", :code128b)
             @test code == [
                 "START B"
                 "a"
@@ -69,7 +69,7 @@ using Plots # it is in runtests.jl just to generate the image for README
     end
 
     @testset "Code128c" begin
-        let code = Barcode.encode("00", :code128c)
+        let code = Barcodes.encode("00", :code128c)
             @test code == [
                 "START C"
                 "00"
@@ -77,7 +77,7 @@ using Plots # it is in runtests.jl just to generate the image for README
                 "STOP"
             ]
         end
-        let code = Barcode.encode("012345", :code128c)
+        let code = Barcodes.encode("012345", :code128c)
             @test code == [
                 "START C"
                 "01"
@@ -90,7 +90,7 @@ using Plots # it is in runtests.jl just to generate the image for README
     end
 
     @testset "Code128" begin
-        let code = Barcode.encode("CSE370", :code128)
+        let code = Barcodes.encode("CSE370", :code128)
             @test code == [
                 "START B"
                 "C"
@@ -104,7 +104,7 @@ using Plots # it is in runtests.jl just to generate the image for README
             ]
         end
 
-        let code = Barcode.encode("\x02Aa\tA0902a93892\x03000a\x04z", :code128)
+        let code = Barcodes.encode("\x02Aa\tA0902a93892\x03000a\x04z", :code128)
             @test code == [
                 "START A"
                 "STX"
@@ -149,15 +149,15 @@ end
         "\x02AB012345\x03",
         "A b!\t0012\nZ z@\t0013\nAz `\t9999\naA \x7f\t1357"
     )
-        code = Barcode.encode(msg, :code128)
-        @test msg == Barcode.decode(code, :code128)
+        code = Barcodes.encode(msg, :code128)
+        @test msg == Barcodes.decode(code, :code128)
     end
 end
 
 @testset "Patterns" begin
     
     @testset "code128 subtypes" begin
-        let pattern = Barcode.barcode_pattern("A", :code128a)
+        let pattern = Barcodes.barcode_pattern("A", :code128a)
             @test pattern == 
                 "00000000000" * # Quiet zone
                 "11010000100" * # START A
@@ -169,7 +169,7 @@ end
             
         end
 
-        let pattern = Barcode.barcode_pattern("a", :code128b)
+        let pattern = Barcodes.barcode_pattern("a", :code128b)
             @test pattern == 
                 "00000000000" * # Quiet zone
                 "11010010000" * # START B
@@ -180,7 +180,7 @@ end
                 "00000000000" # Quiet zone
         end
 
-        let pattern = Barcode.barcode_pattern("00", :code128c)
+        let pattern = Barcodes.barcode_pattern("00", :code128c)
             @test pattern ==
                 "00000000000" * # Quiet zone
                 "11010011100" * # START C
@@ -193,7 +193,7 @@ end
     end
 
     @testset "code128 auto" begin
-        let pattern = Barcode.barcode_pattern("A", :code128)
+        let pattern = Barcodes.barcode_pattern("A", :code128)
             @test pattern ==
                 "00000000000" * # Quiet zone
                 "11010010000" * # START B
@@ -204,7 +204,7 @@ end
                 "00000000000" # Quiet zone
         end
 
-        let pattern = Barcode.barcode_pattern("a", :code128)
+        let pattern = Barcodes.barcode_pattern("a", :code128)
             @test pattern ==
                 "00000000000" * # Quiet zone
                 "11010010000" * # START B
@@ -215,7 +215,7 @@ end
                 "00000000000" # Quiet zone
         end
 
-        let pattern = Barcode.barcode_pattern("00", :code128)
+        let pattern = Barcodes.barcode_pattern("00", :code128)
             @test pattern == 
                 "00000000000" * # Quiet zone
                 "11010011100" * # START C
@@ -226,7 +226,7 @@ end
                 "00000000000" # Quiet zone
         end
 
-        let pattern = Barcode.barcode_pattern("\x02A\tB\x07\x03", :code128)
+        let pattern = Barcodes.barcode_pattern("\x02A\tB\x07\x03", :code128)
             @test pattern == 
                 "00000000000" * # Quiet zone
                 "11010000100" * # START A
@@ -245,7 +245,7 @@ end
 
     @testset "mixed subtypes" begin
 
-        let pattern = Barcode.barcode_pattern(
+        let pattern = Barcodes.barcode_pattern(
                 [
                     "START A"
                     "A"
@@ -277,7 +277,7 @@ end
                 "00000000000" # Quiet zone
         end
 
-        let pattern = Barcode.barcode_pattern(
+        let pattern = Barcodes.barcode_pattern(
                 [
                     "START C"
                     "FNC 1"
@@ -308,9 +308,9 @@ end
         "\x02AB012345\x03",
         "A b!\t0012\nZ z@\t0013\nAz `\t9999\naA \x7f\t1357"
     )
-        code = Barcode.encode(msg, :code128)
-        pattern = Barcode.barcode_pattern(code, :code128)
-        @test msg == Barcode.barcode_decode(pattern, :code128)
+        code = Barcodes.encode(msg, :code128)
+        pattern = Barcodes.barcode_pattern(code, :code128)
+        @test msg == Barcodes.barcode_decode(pattern, :code128)
     end
 end
 
@@ -318,13 +318,13 @@ end
     @testset "save Images.jl" begin
         let zip_code = "12.345-678"
             zip_code = replace(zip_code, r"\s|\.|\-" => "")
-            pattern = Barcode.barcode_pattern(zip_code, :code128)
-            img = Barcode.barcode_img(pattern)
+            pattern = Barcodes.barcode_pattern(zip_code, :code128)
+            img = Barcodes.barcode_img(pattern)
             @test FileIO.save("../img/zipcode_img.png", img) === nothing
         end
 
-        let pattern = Barcode.barcode_pattern("\x02abc1234\x03", :code128)
-            img = Barcode.barcode_img(pattern)
+        let pattern = Barcodes.barcode_pattern("\x02abc1234\x03", :code128)
+            img = Barcodes.barcode_img(pattern)
             @test FileIO.save("../img/abc1234.png", img) === nothing
         end
     end
@@ -332,8 +332,8 @@ end
     @testset "Plot barcode" begin
         let zip_code = "12.345-678"
             zip_code = replace(zip_code, r"\s|\.|\-" => "")
-            pattern = Barcode.barcode_pattern(zip_code, :code128)
-            x, w = Barcode.barcode_positions(pattern)
+            pattern = Barcodes.barcode_pattern(zip_code, :code128)
+            x, w = Barcodes.barcode_positions(pattern)
             Plots.plot(
                 [x'; x' + w'], ones(2, length(x)), color = :black, fill = true,
                 xlims = (1, length(pattern)),  ylims = (0, 1), border = :none,
