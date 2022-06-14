@@ -345,16 +345,13 @@ julia> code = encode("\x02Abc\x03", :code128)
  "STOP"
 """
 function decode(code::Vector{String}, encoding_type::Symbol)
-    if encoding_type in (:code128, :code128a, :code128b, :code128c)
-        decoded = _decode_code128(code::Vector{String})
-    else
+    encoding_type in (:code128, :code128a, :code128b, :code128c) ||
         throw(
             ArgumentError(
                 "Decoding type `$(Meta.quot(mode))` not implemented"
             )
         )
-    end
-    return decoded
+    return _decode_code128(code::Vector{String})
 end
 
 function _checksum_code128(code::Vector{String})
