@@ -314,6 +314,36 @@ end
     end
 end
 
+@testset "Checksum" begin
+    let code = Barcodes.encode("A", :code128)
+        @test Barcodes.checksum(code) == 34
+    end
+    let code = Barcodes.encode("A", :code128a)
+        @test Barcodes.checksum(code) == 33
+    end
+    let code = Barcodes.encode("a", :code128b)
+        @test Barcodes.checksum(code) == 66
+    end
+    let code = Barcodes.encode("00", :code128c)
+        @test Barcodes.checksum(code) == 2
+    end
+    let code = 
+        [
+            "START A"
+            "A"
+            "B"
+            "SHIFT B"
+            "a"
+            "A"
+            "CODE C"
+            "00"
+            "CHECKSUM"
+            "STOP"
+        ]
+        @test Barcodes.checksum(code) == 75
+    end
+end
+
 @testset "Images" begin
     @testset "save Images.jl" begin
         let zip_code = "12.345-678"

@@ -356,3 +356,47 @@ function decode(code::Vector{String}, encoding_type::Symbol)
     end
     return decoded
 end
+
+function checksum(code::Vector{String})
+    m = match(r"^START (A|B|C)$", first(code))
+    m !== nothing || throw(
+        ArgumentError(
+            "First element of `code` should be either `START A`, `START B` or `START C`"
+        ),
+    )
+
+    nextsubtype = subtype = Symbol("code128$(lowercase(first(code)[end]))")
+
+    nrow = findfirst(==(first(code)), CODE128[:, subtype])
+    chk_sum = CODE128.value[nrow]
+    multiplier = 0
+
+    # skip first START [A|B|C]
+    # and stop before CHECKSUM and STOP
+    for c in code[2:end-2]
+
+        multiplier += 1
+
+        nrow = findfirst(==(c), CODE128[:, nextsubtype])
+        nrow !== nothing || throw(
+            ArgumentError(
+                "$c is not a valid CODE128 code",
+            ),
+        )
+        chk_sum += multiplier * CODE128.value[nrow]
+
+        nextsubtype = subtype
+
+        c == "SHIFT A" && (nextsubtype = :code128a)
+        c == "SHIFT B" && (nextsubtype = :code128b)
+        c == "CODE A" && (subtype = nextsubtype = :code128a)
+        c == "CODE B" && (subtype = nextsubtype = :code128b)
+        c == "CODE C" && (subtype = nextsubtype = :code128c)
+        c == "FNC 1" && (subtype = nextsubtype = :code128a)
+    end
+
+    chk_sum = chk_sum % 103
+    m = match(r"(\d+)", code[end-1])
+    m === nothing || parse(Int, m.captures[1]) == chk_sum || @warn "Code checksum does not match computed checksum"
+    return chk_sum
+end
