@@ -316,16 +316,16 @@ end
 
 @testset "Checksum" begin
     let code = Barcodes.encode("A", :code128)
-        @test Barcodes.checksum(code) == 34
+        @test Barcodes.checksum(code, :code128) == 34
     end
     let code = Barcodes.encode("A", :code128a)
-        @test Barcodes.checksum(code) == 33
+        @test Barcodes.checksum(code, :code128a) == 33
     end
     let code = Barcodes.encode("a", :code128b)
-        @test Barcodes.checksum(code) == 66
+        @test Barcodes.checksum(code, :code128b) == 66
     end
     let code = Barcodes.encode("00", :code128c)
-        @test Barcodes.checksum(code) == 2
+        @test Barcodes.checksum(code, :code128c) == 2
     end
     let code = 
         [
@@ -340,7 +340,7 @@ end
             "CHECKSUM"
             "STOP"
         ]
-        @test Barcodes.checksum(code) == 75
+        @test Barcodes.checksum(code, :code128) == 75
     end
 end
 

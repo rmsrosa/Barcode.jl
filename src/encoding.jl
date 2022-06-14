@@ -357,7 +357,7 @@ function decode(code::Vector{String}, encoding_type::Symbol)
     return decoded
 end
 
-function checksum(code::Vector{String})
+function _checksum_code128(code::Vector{String})
     m = match(r"^START (A|B|C)$", first(code))
     m !== nothing || throw(
         ArgumentError(
@@ -399,4 +399,27 @@ function checksum(code::Vector{String})
     m = match(r"(\d+)", code[end-1])
     m === nothing || parse(Int, m.captures[1]) == chk_sum || @warn "Code checksum does not match computed checksum"
     return chk_sum
+end
+
+"""
+    checksum(code::Vector{String}, encoding_type::Symbol)
+
+Return the checksum of the given `code` according to the chosen `encoding_type`.
+
+The returned checksum is of type `Int`.
+
+If the given code already contains the value of the checksum, this value is compared
+against the computed checksum and a warning is showed in case they differ.
+
+The only encoding types implemented so far are `:code128`, `:code128a`, `:code128b`, and `:code128c`, but the subtypes are not enforced.
+"""
+function checksum(code::Vector{String}, encoding_type::Symbol)
+    encoding_type in (:code128, :code128a, :code128b, :code128c) ||
+        throw(
+            ArgumentError(
+                "Decoding type `$(Meta.quot(mode))` not implemented"
+            )
+        )
+    
+    return _checksum_code128(code)
 end
