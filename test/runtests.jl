@@ -10,7 +10,7 @@ using Plots # it is in runtests.jl just to generate the image for README
             @test code == [
                 "START A"
                 "A"
-                "CHECKSUM"
+                "CHECKSUM 33"
                 "STOP"
             ]
         end
@@ -20,7 +20,7 @@ using Plots # it is in runtests.jl just to generate the image for README
                 "STX"
                 "A"
                 "ETX"
-                "CHECKSUM"
+                "CHECKSUM 24"
                 "STOP"
             ]
         end
@@ -31,7 +31,7 @@ using Plots # it is in runtests.jl just to generate the image for README
             @test code == [
                 "START B"
                 "A"
-                "CHECKSUM"
+                "CHECKSUM 34"
                 "STOP"
             ]
         end
@@ -41,28 +41,7 @@ using Plots # it is in runtests.jl just to generate the image for README
                 "a"
                 "B"
                 "c"
-                "CHECKSUM"
-                "STOP"
-            ]
-        end
-    end
-
-    @testset "Code128b" begin
-        let code = Barcodes.encode("A", :code128b)
-            @test code == [
-                "START B"
-                "A"
-                "CHECKSUM"
-                "STOP"
-            ]
-        end
-        let code = Barcodes.encode("aBc", :code128b)
-            @test code == [
-                "START B"
-                "a"
-                "B"
-                "c"
-                "CHECKSUM"
+                "CHECKSUM 26"
                 "STOP"
             ]
         end
@@ -73,7 +52,7 @@ using Plots # it is in runtests.jl just to generate the image for README
             @test code == [
                 "START C"
                 "00"
-                "CHECKSUM"
+                "CHECKSUM 2"
                 "STOP"
             ]
         end
@@ -83,7 +62,7 @@ using Plots # it is in runtests.jl just to generate the image for README
                 "01"
                 "23"
                 "45"
-                "CHECKSUM"
+                "CHECKSUM 81"
                 "STOP"
             ]
         end
@@ -99,7 +78,7 @@ using Plots # it is in runtests.jl just to generate the image for README
                 "3"
                 "7"
                 "0"
-                "CHECKSUM"
+                "CHECKSUM 21"
                 "STOP"
             ]
         end
@@ -132,7 +111,7 @@ using Plots # it is in runtests.jl just to generate the image for README
                 "EOT"
                 "CODE B"
                 "z"
-                "CHECKSUM"
+                "CHECKSUM 15"
                 "STOP"
             ]
         end
@@ -166,7 +145,6 @@ end
                 "11000111010" * # STOP
                 "11" * # END
                 "00000000000" # Quiet zone
-            
         end
 
         let pattern = Barcodes.barcode_pattern("a", :code128b)
@@ -236,7 +214,7 @@ end
                 "10001011000" * # B
                 "10011010000" * # \x07 = BEL = Bell
                 "10000101100" * # \x03 = ETX = End of Text
-                "10001100100" * # CHECKSUM
+                "10001100100" * # CHECKSUM 8
                 "11000111010" * # STOP
                 "11" * # END
                 "00000000000" # Quiet zone

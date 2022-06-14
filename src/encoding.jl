@@ -33,6 +33,9 @@ function _encode_code128a(msg::AbstractString)
     end
     append!(code, ["CHECKSUM", "STOP"])
 
+    chk_sum = _checksum_code128(code)
+    code[end-1] = "CHECKSUM $chk_sum"
+
     return code
 end
 
@@ -59,6 +62,10 @@ function _encode_code128b(msg::AbstractString)
         "CHECKSUM"
         "STOP"
     ]
+    
+    chk_sum = _checksum_code128(code)
+    code[end-1] = "CHECKSUM $chk_sum"
+
     return code
 end
 
@@ -83,6 +90,10 @@ function _encode_code128c(msg::AbstractString)
         "CHECKSUM"
         "STOP"
     ]
+
+    chk_sum = _checksum_code128(code)
+    code[end-1] = "CHECKSUM $chk_sum"
+
     return code
 end
 
@@ -185,6 +196,10 @@ function _encode_code128(msg)
         nextsubtype = subtype
     end
     append!(code, ["CHECKSUM", "STOP"])
+
+    chk_sum = _checksum_code128(code)
+    code[end-1] = "CHECKSUM $chk_sum"
+
     return code
 end
 

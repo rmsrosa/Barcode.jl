@@ -40,7 +40,7 @@ function _barcode_pattern_code128(code::Vector{<:AbstractString})
 
         multiplier += 1
 
-        if c == "CHECKSUM"
+        if startswith(c, "CHECKSUM")
             push!(pattern, CODE128.pattern[rem(chk_sum, 103)+1])
             chk_sum += multiplier * chk_sum
         else
