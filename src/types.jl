@@ -17,8 +17,6 @@ Fields:
         String with the message encoded
     code::Vector{String}
         Encoded message.
-
-
 """
 struct Code128 <: Barcode
     subtype::Symbol
