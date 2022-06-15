@@ -123,14 +123,14 @@ julia> msg = "Barcodes.jl"
 "Barcodes.jl"
 
 julia> pattern = Barcodes.barcode_pattern(msg, :code128)
-"00000000000110100100001000101100010010110000100100111101000010110010001111010100001001101011001000010011001110100001100101100101000011001101100110001110101100000000000"
+"0000000000011010010000100010110001001011000010010011110100001011001000111101010000100110101100100001011110010010011001110100001100101100101000010001001100110001110101100000000000"
 
 julia> x, w = Barcodes.barcode_positions(pattern)
-([12, 15, 18, 23, 27, 29, 34, 37, 39, 45  …  122, 126, 128, 133, 137, 140, 144, 149, 153, 155], [2, 1, 1, 1, 1, 2, 1, 1, 2, 1  …  2, 1, 1, 2, 2, 2, 2, 3, 1, 2])
+([12, 15, 18, 23, 27, 29, 34, 37, 39, 45  …  133, 137, 139, 144, 148, 151, 155, 160, 164, 166], [2, 1, 1, 1, 1, 2, 1, 1, 2, 1  …  2, 1, 1, 1, 1, 2, 2, 3, 1, 2])
 
 julia> plot([x'; x' + w'], ones(2, length(x)), color = :black, fill = true, xlims = (1, length(pattern)),  ylims = (0, 1), border = :none, legend = nothing, size = (896, 448))
 
-julia> savefig("img/barcodejl.svg")
+julia> savefig("img/barcodesjl.svg")
 ```
 
 We save the barcode plot to `SVG` and added the text and extra margins with [Inkspace](https://inkscape.org), adjusting the size to 1280 x 640.
@@ -172,17 +172,47 @@ julia> FileIO.save("img/abc1234.png", img)
 
 ![CSE370](img/abc1234.png)
 
+### A Code128 type
+
+More recently, a `Code128` type is being designed, which will allow for proper dispatch of methods.
+
+Currently, we can create a `Code128` type by passing either a message, as a `String`, or a code, as a `Vector{String}`. The `show` method is extended for a better visualization of the barcode content. Unicode blocks are used for a simple view of the code bars.
+
+```julia
+julia> Barcodes.Code128("12345678")
+Code128: 12345678
+
+     ▐▌▌▐█ ▌█ █▌▐ ▐▐▌ █▌ ▌█▐▌ ▐▐ ▌ █▌█▐▌ █▌▌█      
+
+
+julia> show(IOContext(stdout, :compact => false), Barcodes.Code128("1234567"))
+Barcode type: Code128
+Message: 1234567
+Code:
+        START C
+        12
+        34
+        56
+        CODE B
+        7
+        CHECKSUM 44
+        STOP
+Barcode pattern:
+     ▐▌▌▐█ ▌█ █▌▐ ▐▐▌ █▌ ▌█▐▐█▌█▌█▌█▐█▐ ▐▌█▌█ ▐█▐▐▌     
+
+```
+
 ## To do
 
 - [ ] Encoding in Code128 is not yet complete. It needs to be able to handle the directive FNC4 to access iso-latin ISO/IEC 8859-1 characters.
 
-- [ ] It can also be improved to generate GSM-128 encoding.
+- [ ] It can also be improved to generate GSM-128 encoding, which uses Code128 with the FNC1 directive.
 
 - [ ] Add Documentation and simplify README.
 
 - [ ] Register the package.
 
-- [ ] There are plenty of other barcode formats that can be implemented.
+- [ ] There are plenty of other barcode formats that can be implemented, both 1D and 2D, such as QR code.
 
 ## License
 

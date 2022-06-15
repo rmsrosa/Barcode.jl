@@ -64,12 +64,12 @@ function Base.show(io::IO, barcode::Barcodes.Code128)
         print(io, "\n\n$s\n")
     else
         print(io, "Barcode type: $(uppercasefirst(string(barcode.subtype)))\n")
-        print(io, " Message: ")
+        print(io, "Message: ")
         printstyled(io, barcode.message, reverse = true)
-        print(io, "\n Code:\n")
+        print(io, "\nCode:\n")
         for c in barcode.code
             print(io, "\t$c\n")
         end
-        println(io, " Barcode pattern:\n$s")
+        println(io, "Barcode pattern:\n$s")
     end
 end
