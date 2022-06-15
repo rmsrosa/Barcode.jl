@@ -279,10 +279,9 @@ end
 
 # Experimental
 # Works nice in some places but in others there is a separation between the lines that breaks the image
-function show_pattern(pattern::String)
+function utf8block_pattern(pattern::String)
     iseven(length(pattern)) || (pattern *= '0')
     a = BitVector(c == '1' for c in pattern * '0'^isodd(length(pattern)))
     s = prod(getindex(" ▐▌█", [[1, 2, 5, 8][2*a[i] + a[i+1] + 1]]) for i in 1:2:length(a))
-    println(s * '\n' * s * '\n' * s)
-    return nothing
+    return s
 end

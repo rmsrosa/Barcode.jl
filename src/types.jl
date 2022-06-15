@@ -54,3 +54,22 @@ struct Code128 <: Barcode
         new(subtype, msg, code)
     end
 end
+
+function Base.show(io::IO, barcode::Barcodes.Code128)
+    pattern = Barcodes.barcode_pattern(barcode.code, barcode.subtype)
+    s = Barcodes.utf8block_pattern(pattern)
+    if get(io, :compact, true)
+        print(io, "Code128: ")
+        printstyled(io, barcode.message, reverse = true)
+        print(io, "\n\n$s\n")
+    else
+        print(io, "Barcode type: $(uppercasefirst(string(barcode.subtype)))\n")
+        print(io, " Message: ")
+        printstyled(io, barcode.message, reverse = true)
+        print(io, "\n Code:\n")
+        for c in barcode.code
+            print(io, "\t$c\n")
+        end
+        println(io, " Barcode pattern:\n$s")
+    end
+end
