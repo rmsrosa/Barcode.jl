@@ -3,16 +3,22 @@
 # Code128 encoding with subtype Code128A
 function _encode_code128a(msg::AbstractString)
     @inbounds for i = 1:ncodeunits(msg)
-        codeunit(msg, i) ≥ 0x7f && throw(
+        codeunit(msg, i) ≤ 0x7f || 0xa0 ≤ codeunit(msg, i) ≤ 0xff || throw(
             ArgumentError(
-                "The given `msg` contains characters outside the range 0 - 126 and " * 
-                "cannot be enncoded in Code128"
+                "The given `msg` contains characters outside the ranges 0 - 126 and " * 
+                "160 - 255 and cannot be encoded in Code128"
             ),
         )
-        codeunit(msg, i) ≥ 0x60 && throw(
+        codeunit(msg, i) ≤ 0x5f || 0xa0 ≤ codeunit(msg, i) ≤ 0xff || throw(
             ArgumentError(
                 "The given ascii `msg` contains lowercase letters or characters outside " *
-                "the range 0 - 95 and cannot be encoded in subtype Code128A"
+                "the ranges 0 - 95 and 160 - 255 and cannot be encoded in subtype Code128A"
+            )
+        )
+        codeunit(msg, i) ≥ 0xa0 && throw(
+            ArgumentError(
+                "The given ascii `msg` contains extended ascii letters within the range " * 
+                "160 - 255 but encoding for that has not yet been implemented"
             )
         )
     end
@@ -42,16 +48,22 @@ end
 # Code128 encoding with subtype Code128B
 function _encode_code128b(msg::AbstractString)
     @inbounds for i = 1:ncodeunits(msg)
-        codeunit(msg, i) ≥ 0x7f && throw(
+        codeunit(msg, i) ≤ 0x7f || 0xa0 ≤ codeunit(msg, i) ≤ 0xff || throw(
             ArgumentError(
-                "The given `msg` contains characters outside the range 0 - 126 and " * 
-                "cannot be enncoded in Code128"
+                "The given `msg` contains characters outside the ranges 0 - 126 and " * 
+                "160 - 255 and cannot be encoded in Code128"
+            ),
+        )
+        0x20 ≤ codeunit(msg, i) || 0xa0 ≤ codeunit(msg, i) ≤ 0xff || throw(
+            ArgumentError(
+                "The given ascii `msg` contains symbology characters or letters outside the ranges " *
+                "32 - 127 and 160 - 255 and cannot be fully encoded in subtype Code128B"
             )
         )
-        codeunit(msg, i) ≤ 0x1f && throw(
+        codeunit(msg, i) ≥ 0xa0 && throw(
             ArgumentError(
-                "The given ascii `msg` contains symbology characters outside the range " *
-                "32 - 127 and cannot be fully encoded in subtype Code128B"
+                "The given ascii `msg` contains extended ascii letters within the range " * 
+                "160 - 255 but encoding for that has not yet been implemented"
             )
         )
     end
@@ -71,6 +83,20 @@ end
 
 # Code128 encoding with subtype Code128C
 function _encode_code128c(msg::AbstractString)
+    @inbounds for i = 1:ncodeunits(msg)
+        codeunit(msg, i) ≤ 0x7f || 0xa0 ≤ codeunit(msg, i) ≤ 0xff || throw(
+            ArgumentError(
+                "The given `msg` contains characters outside the ranges 0 - 126 and " * 
+                "160 - 255 and cannot be encoded in Code128"
+            ),
+        )
+        codeunit(msg, i) ≥ 0xa0 && throw(
+            ArgumentError(
+                "The given ascii `msg` contains extended ascii letters within the range " * 
+                "160 - 255 but encoding for that has not yet been implemented"
+            )
+        )
+    end
     all(isdigit, msg) || throw(
         ArgumentError(
             "The given `msg` contains characters which are not digits and cannot " *
@@ -102,12 +128,20 @@ end
 # Use of Start, Code Set, and Shift symbols to Minimize Symbol Length (Informative),
 # pages 268 to 269."
 function _encode_code128(msg)
-    isascii(msg) || throw(
-        ArgumentError(
-            "The given `msg` contains non-ascii characters and cannot " *
-            "be fully encoded in Code128"
+    @inbounds for i = 1:ncodeunits(msg)
+        codeunit(msg, i) ≤ 0x7f || 0xa0 ≤ codeunit(msg, i) ≤ 0xff || throw(
+            ArgumentError(
+                "The given `msg` contains characters outside the ranges 0 - 126 and " * 
+                "160 - 255 and cannot be encoded in Code128"
+            ),
         )
-    )
+        codeunit(msg, i) ≥ 0xa0 && throw(
+            ArgumentError(
+                "The given ascii `msg` contains extended ascii letters within the range " * 
+                "160 - 255 but encoding for that has not yet been implemented"
+            )
+        )
+    end
     code = String[]
 
     len_msg = length(msg)
@@ -157,7 +191,7 @@ function _encode_code128(msg)
             nextsubtype = subtype = :code128c
         elseif nextsubtype != :code128a && codeunit(msg, ind) ≤ 0x1f # check for symbology
             if nextsubtype == :code128b &&
-                    len_msg > ind && 0x60 ≤ codeunit(msg, ind+1) ≤ 0x7e
+                    len_msg > ind && 0x60 ≤ codeunit(msg, ind+1) ≤ 0x7f
                 push!(code, "SHIFT A")
                 nextsubtype = :code128a
             else
